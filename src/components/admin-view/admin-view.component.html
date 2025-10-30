@@ -1,0 +1,186 @@
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  <header class="bg-white dark:bg-gray-800 shadow-md">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">管理者儀表板</h1>
+      <button (click)="logout.emit()" class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+        <span>登出</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4">
+        <div class="bg-blue-500 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">總學生人數</p>
+          <p class="text-3xl font-bold">{{ studentService.totalStudents() }}</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4">
+        <div class="bg-green-500 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">已出席人數</p>
+          <p class="text-3xl font-bold">{{ studentService.presentStudents() }}</p>
+        </div>
+      </div>
+      <div (click)="toggleAbsentFilter()" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 cursor-pointer hover:shadow-xl transition-shadow duration-300">
+        <div class="bg-red-500 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">未出席/請假人數</p>
+          <p class="text-3xl font-bold">{{ studentService.absentStudents() }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+       <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <h2 class="text-xl font-semibold">管理操作</h2>
+            @if (isEvening()) {
+              <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">目前為：晚點名時間</span>
+            } @else {
+              <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">目前為：早點名時間</span>
+            }
+          </div>
+          <div class="flex items-center space-x-3 flex-wrap gap-2">
+              <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">重置狀態</button>
+              <button (click)="exportAbsentList()" class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">匯出缺席名單</button>
+          </div>
+       </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+        <div>
+          <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">搜尋學生 (依姓名或學號)</label>
+          <input 
+            type="text" 
+            id="search"
+            placeholder="輸入關鍵字..."
+            [ngModel]="searchQuery()" 
+            (ngModelChange)="searchQuery.set($event)"
+            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          >
+        </div>
+        <div>
+          <label for="leave-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">篩選假別</label>
+          <select 
+            id="leave-filter"
+            [ngModel]="leaveTypeFilter()" 
+            (ngModelChange)="leaveTypeFilter.set($event)"
+            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            <option value="all">所有假別</option>
+            @for(type of leaveTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Student List Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+              <th scope="col" class="px-6 py-3">學號</th>
+              <th scope="col" class="px-6 py-3">姓名</th>
+              <th scope="col" class="px-6 py-3">狀態</th>
+              <th scope="col" class="px-6 py-3">假別</th>
+              <th scope="col" class="px-6 py-3">備註</th>
+              <th scope="col" class="px-6 py-3 text-center">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of filteredStudents(); track student.id) {
+              <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ student.id }}</td>
+                <td class="px-6 py-4">{{ student.name }}</td>
+                <td class="px-6 py-4">
+                  <span class="px-2 py-1 font-semibold leading-tight rounded-full text-xs" [class]="getStatusClass(student.status)">
+                    {{ student.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">{{ student.leaveType || '無' }}</td>
+                <td class="px-6 py-4">{{ student.leaveRemarks || '無' }}</td>
+                <td class="px-6 py-4 text-center">
+                  <button (click)="deleteStudent(student.id)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                    刪除
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+                <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                  沒有符合條件的學生
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Password Modal -->
+  @if (showResetPasswordModal()) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelReset()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+        <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">需要管理員權限</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">此為高風險操作，請輸入密碼以繼續。</p>
+        
+        <form (ngSubmit)="confirmReset()">
+          <div>
+            <label for="resetPassword" class="sr-only">密碼</label>
+            <input 
+              id="resetPassword"
+              type="password"
+              [ngModel]="resetPasswordInput()"
+              (ngModelChange)="resetPasswordInput.set($event); passwordError.set(null)"
+              name="resetPassword"
+              placeholder="請輸入密碼"
+              autocomplete="current-password"
+              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
+            >
+          </div>
+          
+          @if (passwordError()) {
+            <p class="text-red-500 text-sm mt-2">{{ passwordError() }}</p>
+          }
+
+          <div class="mt-6 flex justify-end space-x-3">
+            <button 
+              type="button" 
+              (click)="cancelReset()" 
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+            >
+              取消
+            </button>
+            <button 
+              type="submit"
+              class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition"
+            >
+              確認重置
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

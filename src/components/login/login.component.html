@@ -1,0 +1,83 @@
+<div class="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-lg dark:bg-gray-800">
+    <div class="text-center">
+      <h1 class="text-4xl font-bold text-gray-800 dark:text-white">智慧點名系統</h1>
+      <p class="mt-2 text-gray-600 dark:text-gray-400">請選擇您的登入身份</p>
+    </div>
+    
+    <div class="border-t border-gray-200 dark:border-gray-700 pt-8">
+      <h2 class="text-2xl font-semibold text-center text-gray-700 dark:text-gray-200 mb-6">學生登入</h2>
+      <form (ngSubmit)="handleStudentLogin()" class="space-y-6">
+        <div>
+          <label for="studentId" class="text-sm font-medium text-gray-700 dark:text-gray-300">學號</label>
+          <input 
+            id="studentId" 
+            name="studentId" 
+            type="text" 
+            required 
+            [ngModel]="studentId()"
+            (ngModelChange)="studentId.set($event)"
+            placeholder="請輸入您的學號"
+            class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100"
+          >
+        </div>
+        <div>
+          <label for="studentName" class="text-sm font-medium text-gray-700 dark:text-gray-300">姓名</label>
+          <input 
+            id="studentName" 
+            name="studentName" 
+            type="text" 
+            required 
+            [ngModel]="studentName()"
+            (ngModelChange)="studentName.set($event)"
+            placeholder="請輸入您的姓名"
+            class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100"
+          >
+        </div>
+
+        <div class="flex items-center">
+          <input 
+            id="remember-me" 
+            name="remember-me" 
+            type="checkbox" 
+            [ngModel]="rememberMe()"
+            (ngModelChange)="rememberMe.set($event)"
+            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
+          >
+          <label for="remember-me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+            記住我
+          </label>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+            <p>{{ errorMessage() }}</p>
+          </div>
+        }
+
+        <button 
+          type="submit"
+          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
+        >
+          登入
+        </button>
+      </form>
+    </div>
+
+    <div class="relative flex py-5 items-center">
+        <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+        <span class="flex-shrink mx-4 text-gray-400">或</span>
+        <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+    </div>
+
+    <div>
+      <h2 class="text-2xl font-semibold text-center text-gray-700 dark:text-gray-200 mb-6">管理者</h2>
+      <button 
+        (click)="handleAdminLogin()"
+        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors duration-300"
+      >
+        進入管理系統
+      </button>
+    </div>
+  </div>
+</div>

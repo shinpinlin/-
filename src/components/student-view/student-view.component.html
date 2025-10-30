@@ -1,0 +1,77 @@
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+@if (currentUser(); as user) {
+  <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6 relative">
+    <button (click)="logout.emit()" class="absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
+    </button>
+    <div class="text-center">
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">歡迎, {{ user.name }}</h1>
+      <p class="mt-2 text-lg text-indigo-600 dark:text-indigo-400 font-semibold">{{ currentStatus() }}</p>
+    </div>
+
+    @if (!leaveSubmitted() && user.status !== '請假') {
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+        @if (!showLeaveForm()) {
+          <div class="text-center">
+            <button (click)="showLeaveForm.set(true)" class="px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-75 transition-transform transform hover:scale-105">
+              需要請假嗎？
+            </button>
+          </div>
+        } @else {
+          <div>
+            <h2 class="text-xl font-semibold text-center text-gray-700 dark:text-gray-200 mb-4">請假申請</h2>
+            <form (ngSubmit)="submitLeave()" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">假別</label>
+                <div class="grid grid-cols-2 gap-4">
+                  @for (type of leaveTypes; track type) {
+                    <button 
+                      type="button"
+                      (click)="leaveType.set(type)"
+                      class="w-full px-6 py-3 text-base font-semibold rounded-lg shadow-sm transition-colors duration-200"
+                      [class]="leaveType() === type 
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                        : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'"
+                    >
+                      {{ type }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (leaveType() === '其他') {
+                <div>
+                  <label for="remarks" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    備註 <span class="text-red-500">(必填)</span>
+                  </label>
+                  <textarea id="remarks" name="remarks" rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" placeholder="請在此說明..." class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+              }
+
+              <div class="flex justify-end pt-2">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                  送出申請
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
+        <p class="text-lg font-medium text-green-700 dark:text-green-300">您的狀態已更新！</p>
+      </div>
+    }
+  </div>
+} @else {
+  <!-- This will be shown briefly if the user is deleted before logout completes -->
+  <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
+    <div class="text-center">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-white">正在登出...</h1>
+        <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">您的帳戶已被管理者移除。</p>
+    </div>
+  </div>
+}
+</div>
