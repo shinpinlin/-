@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Student } from './models/student.model';
 
@@ -18,45 +18,25 @@ import { AdminViewComponent } from './components/admin-view/admin-view.component
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   view = signal<'login' | 'student' | 'admin'>('login');
   currentUser = signal<Student | null>(null);
 
-  ngOnInit() {
-    try {
-      const savedSession = localStorage.getItem('rollCallSession');
-      if (savedSession) {
-        const session = JSON.parse(savedSession);
-        if (session.type === 'admin') {
-          this.onAdminLogin(false); // don't write to localStorage again
-        } else if (session.type === 'student' && session.user) {
-          this.onStudentLogin(session.user, false); // don't write to localStorage again
-        }
-      }
-    } catch (error) {
-      console.error("Failed to parse session from localStorage", error);
-      localStorage.removeItem('rollCallSession');
-    }
-  }
+  // With a simulated backend, we no longer persist sessions in localStorage.
+  // The app will always start on the login screen.
 
-  onStudentLogin(student: Student, writeToStorage = true) {
+  onStudentLogin(student: Student) {
     this.currentUser.set(student);
     this.view.set('student');
-    if (writeToStorage) {
-      localStorage.setItem('rollCallSession', JSON.stringify({ type: 'student', user: student }));
-    }
   }
 
-  onAdminLogin(writeToStorage = true) {
+  onAdminLogin() {
     this.currentUser.set(null);
     this.view.set('admin');
-    if (writeToStorage) {
-      localStorage.setItem('rollCallSession', JSON.stringify({ type: 'admin' }));
-    }
   }
 
   onLogout() {
-    localStorage.removeItem('rollCallSession');
+    // In a real app, this would also call a backend logout endpoint.
     this.currentUser.set(null);
     this.view.set('login');
   }

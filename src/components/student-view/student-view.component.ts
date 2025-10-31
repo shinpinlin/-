@@ -19,6 +19,7 @@ export class StudentViewComponent {
   remarks = signal('');
   showLeaveForm = signal(false);
   leaveSubmitted = signal(false);
+  isSubmitting = signal(false);
   
   private studentService = inject(StudentService);
 
@@ -47,16 +48,24 @@ export class StudentViewComponent {
     return `您目前的狀態為：${user.status}`;
   });
 
-  submitLeave() {
+  async submitLeave() {
     if (this.leaveType() === '其他' && !this.remarks().trim()) {
       alert('選擇「其他」假別時，請務必填寫備註。');
       return;
     }
     const user = this.currentUser();
     if (user) {
-        this.studentService.applyForLeave(user.id, this.leaveType(), this.remarks());
-        this.leaveSubmitted.set(true);
-        this.showLeaveForm.set(false);
+        this.isSubmitting.set(true);
+        try {
+            await this.studentService.applyForLeave(user.id, this.leaveType(), this.remarks());
+            this.leaveSubmitted.set(true);
+            this.showLeaveForm.set(false);
+        } catch (error) {
+            console.error('Failed to submit leave application', error);
+            alert('提交請假申請失敗，請稍後再試。');
+        } finally {
+            this.isSubmitting.set(false);
+        }
     }
   }
 }

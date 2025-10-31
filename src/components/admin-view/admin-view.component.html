@@ -49,9 +49,13 @@
           <div class="flex items-center gap-4">
             <h2 class="text-xl font-semibold">管理操作</h2>
             @if (isEvening()) {
-              <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">目前為：晚點名時間</span>
+              <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                晚點名 (剩餘 {{ countdown() }})
+              </span>
             } @else {
-              <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">目前為：早點名時間</span>
+              <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                早點名 (剩餘 {{ countdown() }})
+              </span>
             }
           </div>
           <div class="flex items-center space-x-3 flex-wrap gap-2">
@@ -104,6 +108,7 @@
               <th scope="col" class="px-6 py-3">狀態</th>
               <th scope="col" class="px-6 py-3">假別</th>
               <th scope="col" class="px-6 py-3">備註</th>
+              <th scope="col" class="px-6 py-3">最後更新時間</th>
               <th scope="col" class="px-6 py-3 text-center">操作</th>
             </tr>
           </thead>
@@ -119,15 +124,16 @@
                 </td>
                 <td class="px-6 py-4">{{ student.leaveType || '無' }}</td>
                 <td class="px-6 py-4">{{ student.leaveRemarks || '無' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ student.lastUpdatedAt | date:'MM/dd HH:mm:ss' }}</td>
                 <td class="px-6 py-4 text-center">
-                  <button (click)="deleteStudent(student.id)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                  <button (click)="openDeleteConfirm(student)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                     刪除
                   </button>
                 </td>
               </tr>
             } @empty {
               <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-                <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   沒有符合條件的學生
                 </td>
               </tr>
@@ -174,12 +180,62 @@
             </button>
             <button 
               type="submit"
-              class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition"
+              [disabled]="isResetting()"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
             >
-              確認重置
+              @if(isResetting()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>重置中...</span>
+              } @else {
+                <span>確認重置</span>
+              }
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteConfirmModal() && studentToDelete(); as student) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelDelete()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+        <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">確認刪除</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          您確定要刪除學生 <strong class="text-red-500">{{ student.name }} ({{ student.id }})</strong> 嗎？
+          <br>
+          此操作無法復原。
+        </p>
+        
+        <div class="mt-6 flex justify-end space-x-3">
+          <button 
+            type="button" 
+            (click)="cancelDelete()"
+            [disabled]="isDeleting()"
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition disabled:opacity-50"
+          >
+            取消
+          </button>
+          <button 
+            type="button"
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
+          >
+            @if(isDeleting()) {
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>刪除中...</span>
+            } @else {
+              <span>確認刪除</span>
+            }
+          </button>
+        </div>
       </div>
     </div>
   }

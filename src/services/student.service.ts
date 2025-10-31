@@ -1,30 +1,18 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { Student, StudentStatus, LeaveType } from '../models/student.model';
 
-const STUDENT_LIST_KEY = 'rollCallStudentList';
-
-function getInitialStudents(): Student[] {
-  try {
-    // Check if localStorage is available to prevent errors in non-browser environments
-    if (typeof localStorage !== 'undefined') {
-      const savedStudents = localStorage.getItem(STUDENT_LIST_KEY);
-      return savedStudents ? JSON.parse(savedStudents) : [];
-    }
-  } catch (e) {
-    console.error("Failed to parse students from localStorage", e);
-    // If parsing fails, remove the invalid item to prevent future errors
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(STUDENT_LIST_KEY);
-    }
-  }
-  return [];
-}
+// Helper to simulate network latency
+const fakeApiCall = (delay: number = 500): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, delay));
+};
 
 @Injectable({
   providedIn: 'root',
 })
 export class StudentService {
-  private _students = signal<Student[]>(getInitialStudents());
+  // In a real app, this data would live on a server.
+  // We manage it in-memory here to simulate a shared data source.
+  private _students = signal<Student[]>([]);
 
   public students = this._students.asReadonly();
   
@@ -32,69 +20,70 @@ export class StudentService {
   public presentStudents = computed(() => this._students().filter(s => s.status === '出席').length);
   public absentStudents = computed(() => this._students().filter(s => s.status !== '出席').length);
 
-  constructor() {
-    effect(() => {
-      try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem(STUDENT_LIST_KEY, JSON.stringify(this._students()));
-        }
-      } catch (e) {
-        console.error("Failed to save students to localStorage", e);
-      }
-    });
-  }
 
-  login(studentId: string, name: string): Student {
+  async login(studentId: string, name: string): Promise<Student> {
+    await fakeApiCall();
+    
     let studentToReturn: Student | undefined;
     
     this._students.update(students => {
       const existingStudent = students.find(s => s.id === studentId);
       if (existingStudent) {
+        // If student exists, update their name and mark as present
         return students.map(s => {
           if (s.id === studentId) {
-            // Update existing student, mark as present, and clear leave info
-            studentToReturn = { ...s, name: name, status: '出席', leaveType: undefined, leaveRemarks: undefined };
+            studentToReturn = { ...s, name: name, status: '出席', leaveType: undefined, leaveRemarks: undefined, lastUpdatedAt: new Date() };
             return studentToReturn;
           }
           return s;
         });
       } else {
-        // Add new student
+        // If new student, add them to the list
         const newStudent: Student = {
           id: studentId,
           name: name,
-          status: '出席'
+          status: '出席',
+          lastUpdatedAt: new Date()
         };
         studentToReturn = newStudent;
         return [...students, newStudent];
       }
     });
 
-    return studentToReturn!;
+    if (!studentToReturn) {
+      // This case should not happen with the logic above, but it's good practice for type safety
+      throw new Error('Login failed: could not find or create student.');
+    }
+    
+    return studentToReturn;
   }
 
-  applyForLeave(studentId: string, leaveType: LeaveType, remarks: string) {
+  async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
+    await fakeApiCall();
     this._students.update(students => 
       students.map(s => {
         if (s.id === studentId) {
-          return { ...s, status: '請假', leaveType: leaveType, leaveRemarks: remarks };
+          return { ...s, status: '請假', leaveType: leaveType, leaveRemarks: remarks, lastUpdatedAt: new Date() };
         }
         return s;
       })
     );
   }
 
-  deleteStudent(studentId: string) {
+  async deleteStudent(studentId: string): Promise<void> {
+    await fakeApiCall();
     this._students.update(students => students.filter(s => s.id !== studentId));
   }
   
-  resetToInitialList() {
+  async resetToInitialList(): Promise<void> {
+    await fakeApiCall(1000); // A slightly longer delay for a "heavy" operation
     this._students.update(currentStudents => 
       currentStudents.map(student => ({
         ...student,
         status: '出席' as StudentStatus,
         leaveType: undefined,
-        leaveRemarks: undefined
+        leaveRemarks: undefined,
+        lastUpdatedAt: new Date()
       }))
     );
   }

@@ -5,6 +5,7 @@ export interface Student {
   id: string;
   name: string;
   status: StudentStatus;
+  lastUpdatedAt: Date;
   leaveType?: LeaveType;
   leaveRemarks?: string;
 }

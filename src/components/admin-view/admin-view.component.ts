@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, output, signal, computed, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../services/student.service';
 import { Student, StudentStatus, LeaveType } from '../../models/student.model';
@@ -8,7 +8,7 @@ import { Student, StudentStatus, LeaveType } from '../../models/student.model';
   selector: 'app-admin-view',
   templateUrl: './admin-view.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminViewComponent implements OnInit, OnDestroy {
@@ -19,30 +19,70 @@ export class AdminViewComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
   leaveTypeFilter = signal<'all' | LeaveType>('all');
   isEvening = signal(false);
-  private timeInterval: any;
+  countdown = signal('');
+  private countdownInterval: any;
 
   // Signals for the password modal
   showResetPasswordModal = signal(false);
   resetPasswordInput = signal('');
   passwordError = signal<string | null>(null);
+  isResetting = signal(false);
+
+  // Signals for delete confirmation modal
+  showDeleteConfirmModal = signal(false);
+  studentToDelete = signal<Student | null>(null);
+  isDeleting = signal(false);
 
   readonly leaveTypes: LeaveType[] = ['病假', '事假', '論文假', '其他'];
 
   ngOnInit(): void {
-    this.updateTimeStatus();
-    this.timeInterval = setInterval(() => this.updateTimeStatus(), 60000); // 每分鐘更新一次時間狀態
+    this.updateCountdown();
+    this.countdownInterval = setInterval(() => this.updateCountdown(), 1000); // 每秒更新一次
   }
 
   ngOnDestroy(): void {
-    if (this.timeInterval) {
-      clearInterval(this.timeInterval);
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
     }
   }
 
-  private updateTimeStatus(): void {
-    const hour = new Date().getHours();
+  private updateCountdown(): void {
+    const now = new Date();
+    const currentHour = now.getHours();
+
     // 晚點名時間為 14:00 到 22:59
-    this.isEvening.set(hour >= 14 && hour < 23);
+    const isCurrentlyEvening = currentHour >= 14 && currentHour < 23;
+    this.isEvening.set(isCurrentlyEvening);
+
+    let nextTransitionTime: Date;
+
+    if (isCurrentlyEvening) {
+      // 如果是晚點名，下一個切換點是當日 23:00
+      nextTransitionTime = new Date(now);
+      nextTransitionTime.setHours(23, 0, 0, 0);
+    } else {
+      // 如果是早點名，下一個切換點是 14:00
+      nextTransitionTime = new Date(now);
+      nextTransitionTime.setHours(14, 0, 0, 0);
+      
+      // 如果現在已過 14:00 (即在 23:00-23:59 區間)，則下一個 14:00 是明天
+      if (currentHour >= 23) {
+        nextTransitionTime.setDate(nextTransitionTime.getDate() + 1);
+      }
+    }
+
+    const timeDifference = nextTransitionTime.getTime() - now.getTime();
+
+    // 計算時、分、秒
+    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
+    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
+    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
+
+    // 格式化倒數計時字串
+    const formattedCountdown = 
+      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    this.countdown.set(formattedCountdown);
   }
 
   filteredStudents = computed(() => {
@@ -91,11 +131,20 @@ export class AdminViewComponent implements OnInit, OnDestroy {
   }
 
   // Checks the password and performs the reset action
-  confirmReset(): void {
+  async confirmReset(): Promise<void> {
     if (this.resetPasswordInput() === '119') {
-      this.studentService.resetToInitialList();
-      this.showResetPasswordModal.set(false);
-      alert('重置完成！所有學生的狀態均已標記為「出席」。');
+      this.passwordError.set(null);
+      this.isResetting.set(true);
+      try {
+        await this.studentService.resetToInitialList();
+        this.showResetPasswordModal.set(false);
+        alert('重置完成！所有學生的狀態均已標記為「出席」。');
+      } catch (error) {
+        console.error('Failed to reset student list', error);
+        this.passwordError.set('重置失敗，請稍後再試。');
+      } finally {
+        this.isResetting.set(false);
+      }
     } else {
       this.passwordError.set('密碼錯誤，請重試。');
       this.resetPasswordInput.set('');
@@ -131,8 +180,30 @@ export class AdminViewComponent implements OnInit, OnDestroy {
     document.body.removeChild(link);
   }
 
-  deleteStudent(studentId: string): void {
-    this.studentService.deleteStudent(studentId);
+  openDeleteConfirm(student: Student): void {
+    this.studentToDelete.set(student);
+    this.showDeleteConfirmModal.set(true);
+  }
+
+  cancelDelete(): void {
+    this.showDeleteConfirmModal.set(false);
+    this.studentToDelete.set(null);
+  }
+
+  async confirmDelete(): Promise<void> {
+    const student = this.studentToDelete();
+    if (!student) return;
+
+    this.isDeleting.set(true);
+    try {
+      await this.studentService.deleteStudent(student.id);
+      this.cancelDelete(); // Close modal on success
+    } catch (error) {
+      console.error('Failed to delete student', error);
+      alert('刪除學生失敗，請稍後再試。');
+    } finally {
+      this.isDeleting.set(false);
+    }
   }
 
   getStatusClass(status: StudentStatus): string {
