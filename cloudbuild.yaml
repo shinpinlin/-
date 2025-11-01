@@ -1,1 +1,9 @@
 
+# parent-project/cloudbuild.yaml 內容
+steps:
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args: ['-c', 'echo "--- 正在執行 parent-project 測試建構 ---"']
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args: ['-c', 'echo "✅ 建構觸發器測試成功： $(date)"']
