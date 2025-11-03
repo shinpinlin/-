@@ -1,0 +1,24 @@
+<main>
+  @switch (view()) {
+    @case ('login') {
+      <app-login 
+        (studentLoginSuccess)="onStudentLogin($event)" 
+        (adminLoginSuccess)="onAdminLogin()">
+      </app-login>
+    }
+    @case ('student') {
+      @if(currentUser(); as user) {
+        <app-student-view [currentUser]="user" (logout)="onLogout()"></app-student-view>
+      } @else {
+        <!-- Fallback if currentUser is null, should not happen in normal flow -->
+        <app-login 
+          (studentLoginSuccess)="onStudentLogin($event)" 
+          (adminLoginSuccess)="onAdminLogin()">
+        </app-login>
+      }
+    }
+    @case ('admin') {
+      <app-admin-view (logout)="onLogout()"></app-admin-view>
+    }
+  }
+</main>
