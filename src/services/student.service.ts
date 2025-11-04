@@ -10,7 +10,7 @@ export class StudentService {
   private _students = signal<Student[]>([]);
 
   public students = this._students.asReadonly();
-  
+
   public totalStudents = computed(() => this._students().length);
   public presentStudents = computed(() => this._students().filter(s => s.status === '出席').length);
   public absentStudents = computed(() => this._students().filter(s => s.status !== '出席').length);
@@ -42,7 +42,7 @@ export class StudentService {
 
 
   async login(studentId: string, name: string): Promise<Student> {
-    
+
     const payload = { 
       studentId: studentId, 
       studentName: name 
@@ -62,7 +62,7 @@ export class StudentService {
           return [...students, loggedInStudent];
         }
       });
-      
+
       return loggedInStudent;
 
     } catch (error) {
@@ -72,7 +72,7 @@ export class StudentService {
   }
 
   async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
-    
+
     const payload = {
       studentId: studentId,
       leaveType: leaveType,
@@ -88,35 +88,4 @@ export class StudentService {
       this._students.update(students => 
         students.map(s => {
           if (s.id === studentId) {
-            return { ...s, status: '請假', leaveType: leaveType, leaveRemarks: remarks, lastUpdatedAt: new Date() };
-          }
-          return s;
-        })
-      );
-    } catch (error) {
-       console.error("Apply for leave failed", error);
-       throw error;
-    }
-  }
-
-  // (注意：刪除和重設功能仍然是 "假的")
-  async deleteStudent(studentId: string): Promise<void> {
-    // 這裡的 fakeApiCall 只是示意，我們還沒實作 delete
-    await new Promise(resolve => setTimeout(resolve, 500));
-    this._students.update(students => students.filter(s => s.id !== studentId));
-  }
-   
-  async resetToInitialList(): Promise<void> {
-    // 這裡的 fakeApiCall 只是示意，我們還沒實作 reset
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    this._students.update(currentStudents => 
-      currentStudents.map(student => ({
-        ...student,
-        status: '出席' as StudentStatus,
-        leaveType: undefined,
-        leaveRemarks: undefined,
-        lastUpdatedAt: new Date()
-      }))
-    );
-  }
-}
+            return { ...s, status: '請假', leaveType:
