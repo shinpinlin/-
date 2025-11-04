@@ -1,5 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Student, StudentStatus, LeaveType } from '../models/student.model';
+import { HttpClient } from '@angular/common/http'; // <-- 匯入 HttpClient
+import { firstValueFrom } from 'rxjs'; // <-- 匯入 firstValueFrom
 
 // Helper to simulate network latency
 const fakeApiCall = (delay: number = 500): Promise<void> => {
@@ -20,43 +22,44 @@ export class StudentService {
   public presentStudents = computed(() => this._students().filter(s => s.status === '出席').length);
   public absentStudents = computed(() => this._students().filter(s => s.status !== '出席').length);
 
+  // --- 1. 注入 HttpClient 並設定後端 URL ---
+  private http = inject(HttpClient);
+  // 您的後端 API 網址 (請確認與您部署成功的 "rocallsystem-backend" 網址一致)
+  private backendApiUrl = 'https://rocallsystem-backend.onrender.com'; 
 
   async login(studentId: string, name: string): Promise<Student> {
-    await fakeApiCall();
     
-    let studentToReturn: Student | undefined;
-    
-    this._students.update(students => {
-      const existingStudent = students.find(s => s.id === studentId);
-      if (existingStudent) {
-        // If student exists, update their name and mark as present
-        return students.map(s => {
-          if (s.id === studentId) {
-            studentToReturn = { ...s, name: name, status: '出席', leaveType: undefined, leaveRemarks: undefined, lastUpdatedAt: new Date() };
-            return studentToReturn;
-          }
-          return s;
-        });
-      } else {
-        // If new student, add them to the list
-        const newStudent: Student = {
-          id: studentId,
-          name: name,
-          status: '出席',
-          lastUpdatedAt: new Date()
-        };
-        studentToReturn = newStudent;
-        return [...students, newStudent];
-      }
-    });
+    // --- 2. 移除 fakeApiCall() 並建立傳送的資料 ---
+    const payload = { 
+      studentId: studentId, 
+      studentName: name 
+    };
 
-    if (!studentToReturn) {
-      // This case should not happen with the logic above, but it's good practice for type safety
-      throw new Error('Login failed: could not find or create student.');
+    try {
+      // --- 3. 真正呼叫後端 API (POST 請求) ---
+      const loggedInStudent = await firstValueFrom(
+        this.http.post<Student>(`${this.backendApiUrl}/api/login`, payload)
+      );
+
+      // --- 4. 更新本地狀態 (讓 UI 立即更新) ---
+      this._students.update(students => {
+        const existingStudent = students.find(s => s.id === loggedInStudent.id);
+        if (existingStudent) {
+          return students.map(s => s.id === loggedInStudent.id ? loggedInStudent : s);
+        } else {
+          return [...students, loggedInStudent];
+        }
+      });
+      
+      return loggedInStudent;
+
+    } catch (error) {
+      console.error("Login failed", error);
+      throw error; 
     }
-    
-    return studentToReturn;
   }
+
+  // (注意：以下的功能仍然是 "假的"，未來需要您為它們建立各自的後端 API)
 
   async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
     await fakeApiCall();
@@ -74,9 +77,9 @@ export class StudentService {
     await fakeApiCall();
     this._students.update(students => students.filter(s => s.id !== studentId));
   }
-  
+   
   async resetToInitialList(): Promise<void> {
-    await fakeApiCall(1000); // A slightly longer delay for a "heavy" operation
+    await fakeApiCall(1000); 
     this._students.update(currentStudents => 
       currentStudents.map(student => ({
         ...student,
