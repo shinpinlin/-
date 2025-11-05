@@ -14,7 +14,6 @@
   </header>
 
   <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-    <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4">
         <div class="bg-blue-500 p-3 rounded-full">
@@ -45,29 +44,22 @@
       </div>
     </div>
 
-    <!-- Actions -->
     <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
        <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <h2 class="text-xl font-semibold">{{ languageService.translate('admin.managementActions') }}</h2>
-            @if (studentService.isEvening()) {
-              <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                {{ languageService.translate('admin.eveningRollCall', { countdown: studentService.countdown() }) }}
-              </span>
-            } @else {
-              <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                {{ languageService.translate('admin.morningRollCall', { countdown: studentService.countdown() }) }}
-              </span>
-            }
+            
+            <span class="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                Roll Call Status Check
+            </span>
           </div>
           <div class="flex items-center space-x-3 flex-wrap gap-2">
-              <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">{{ languageService.translate('admin.resetStatus') }}</button>
-              <button (click)="exportAbsentList()" class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">{{ languageService.translate('admin.exportAbsentList') }}</button>
+            <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">{{ languageService.translate('admin.resetStatus') }}</button>
+            <button (click)="exportAbsentList()" class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">{{ languageService.translate('admin.exportAbsentList') }}</button>
           </div>
        </div>
     </div>
     
-    <!-- Filters -->
     <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
         <div>
@@ -99,7 +91,6 @@
     </div>
 
 
-    <!-- Student List Table -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -146,14 +137,13 @@
     </div>
   </main>
   
-  <!-- Password Modal -->
   @if (showResetPasswordModal()) {
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelReset()">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
-        <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.resetModal.title') }}</h3>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ languageService.translate('admin.resetModal.description') }}</p>
-        
         <form (ngSubmit)="confirmReset()">
+          <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.resetModal.title') }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ languageService.translate('admin.resetModal.description') }}</p>
+          
           <div>
             <label for="resetPassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
             <input 
@@ -201,63 +191,9 @@
     </div>
   }
 
-  <!-- Delete Confirmation Modal -->
   @if (showDeleteConfirmModal() && studentToDelete(); as student) {
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelDelete()">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
         <form (ngSubmit)="confirmDelete()">
           <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.deleteModal.title') }}</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {{ languageService.translate('admin.deleteModal.description', { name: student.name, id: student.id }) }}
-            <br>
-            {{ languageService.translate('admin.deleteModal.description2') }}
-          </p>
-          
-          <div>
-            <label for="deletePassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
-            <input 
-              id="deletePassword"
-              type="password"
-              [ngModel]="deletePasswordInput()"
-              (ngModelChange)="deletePasswordInput.set($event); deletePasswordError.set(null)"
-              name="deletePassword"
-              [placeholder]="languageService.translate('admin.resetModal.passwordPlaceholder')"
-              autocomplete="current-password"
-              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
-            >
-          </div>
-          
-          @if (deletePasswordError()) {
-            <p class="text-red-500 text-sm mt-2">{{ deletePasswordError() }}</p>
-          }
-          
-          <div class="mt-6 flex justify-end space-x-3">
-            <button 
-              type="button" 
-              (click)="cancelDelete()"
-              [disabled]="isDeleting()"
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition disabled:opacity-50"
-            >
-              {{ languageService.translate('common.cancel') }}
-            </button>
-            <button 
-              type="submit"
-              [disabled]="isDeleting()"
-              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
-            >
-              @if(isDeleting()) {
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>{{ languageService.translate('common.deleting') }}</span>
-              } @else {
-                <span>{{ languageService.translate('common.confirmDelete') }}</span>
-              }
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
-</div>
+          <p class="text-sm text-gray-600 dark
