@@ -5,7 +5,7 @@ import { Student, StudentStatus, LeaveType } from '../models/student.model';
 import { firstValueFrom } from 'rxjs'; // 👈 新增：用於將 Observable 轉換為 Promise
 
 // Helper to simulate network latency (保留但未使用)
-const HttpClient = (delay: number = 500): Promise<void> => {
+const fakeApiCall = (delay: number = 500): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, delay));
 };
 
@@ -37,7 +37,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1133105', name: '雷漢森' },
   { id: '1133106', name: '哈志豪' },
   { id: '1133107', name: '凃明' },
-  { id: '1133108', name: '高以理' },
+  { id: '1S-CHINA' },
   { id: '1133001', name: '陳儒頡' },
   { id: '1133002', name: '邱浴鈞' },
   { id: '1133003', name: '張羨茿' },
@@ -74,7 +74,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1143042', name: '林訓平' },
   { id: '1143043', name: '范姜群傑' },
   { id: '1143044', name: '陳梅齡' },
-  { id:id: '1143045', name: '劉宇傑' },
+  { id: '1143045', name: '劉宇傑' },
   { id: '1143046', name: '黃冠博' },
   { id: '1143048', name: '張育梓' },
   { id: '1143049', name: '林文澤' },
@@ -90,7 +90,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1143077', name: '蔡承恩' },
   { id: '1143078', name: '廖右安' },
   { id: '1143085', name: '王冠中' },
-  { id: '1all' },
+  { id: '1143089', name: '朱婉容' },
   { id: '1143090', name: '張郁閔' },
   { id: '1143091', name: '廖正豪' },
   { id: '1143096', name: '洪德諭' },
@@ -120,7 +120,7 @@ const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
 })
 export class StudentService {
   // 👈 定義後端 API 網址，假設所有 API 端點都在 /api/v1/ 下
-  private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com';
+  private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com/api/v1';
 
   private _students = signal<Student[]>([]);
   private platformId = inject(PLATFORM_ID);
@@ -171,7 +171,8 @@ export class StudentService {
 
     if (isPlatformBrowser(this.platformId)) {
       this.updateCountdown();
-      //       this.countdownInterval = setInterval as unknown as number;
+      // 👈 關鍵修正：保留 setInterval 呼叫，並使用 as unknown as number 修正 TS2322 錯誤
+      this.countdownInterval = setInterval(() => this.updateCountdown(), 1000) as unknown as number;
     }
   }
 
@@ -241,4 +242,104 @@ export class StudentService {
    * By default, all students are marked as '缺席'.
    */
   private setInitialList(): void {
-    const initialStudents: Student
+    const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
+      id: s.id,
+      name: s.name,
+      status: '缺席',
+      lastUpdatedAt: new Date(),
+    }));
+    this._students.set(initialStudents);
+  }
+  
+  private updateCountdown(): void {
+    const now = new Date();
+    
+    const morningCutoff = new Date(now);
+    morningCutoff.setHours(9, 30, 0, 0);
+
+    const eveningCutoff = new Date(now);
+    eveningCutoff.setHours(21, 30, 0, 0);
+
+    let isCurrentlyEvening: boolean;
+    let nextTransitionTime: Date;
+
+    // From 09:30 to 21:30 is now considered Evening Roll Call
+    if (now >= morningCutoff && now < eveningCutoff) {
+      isCurrentlyEvening = true; 
+      nextTransitionTime = eveningCutoff;
+    } else {
+      // Outside 09:30 to 21:30 is now considered Morning Roll Call
+      isCurrentlyEvening = false; 
+      if (now < morningCutoff) {
+        nextTransitionTime = morningCutoff;
+      } else {
+        nextTransitionTime = new Date(now);
+        nextTransitionTime.setDate(nextTransitionTime.getDate() + 1);
+        nextTransitionTime.setHours(9, 30, 0, 0);
+      }
+    }
+
+    this._isEvening.set(isCurrentlyEvening);
+
+    const timeDifference = nextTransitionTime.getTime() - now.getTime();
+    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
+    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
+    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
+
+    const formattedCountdown = 
+      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    this._countdown.set(formattedCountdown);
+  }
+
+  // ***************************************************************
+  // 核心操作 (替換為 API 呼叫)
+  // ***************************************************************
+
+  /**
+   * 學生登入並標記為「出席」
+   */
+  async login(studentId: string): Promise<Student> {
+    // 👈 替換為 API 呼叫
+    const loggedInStudent = await firstValueFrom(
+      this.http.post<Student>(`${this.API_BASE_URL}/login`, { studentId })
+    );
+    // 成功後，更新本地狀態並返回學生資訊
+    this.fetchStudents(); 
+    return loggedInStudent;
+  }
+
+  /**
+   * 學生申請請假
+   */
+  async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
+    const body = { studentId, leaveType, remarks };
+    // 👈 替換為 API 呼叫
+    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/leave`, body));
+    // 成功後，更新本地狀態
+    this.fetchStudents(); 
+  }
+
+  /**
+   * 管理員刪除學生
+   */
+  async deleteStudent(studentId: string): Promise<void> {
+    // 👈 替換為 API 呼叫
+    await firstValueFrom(this.http.delete<void>(`${this.API_BASE_URL}/students/${studentId}`));
+    // 成功後，更新本地狀態
+    this.fetchStudents(); 
+  }
+  
+  /**
+   * 管理員重置所有學生的狀態
+   */
+  async resetToInitialList(adminPassword?: string): Promise<void> {
+    const body = { password: adminPassword }; // 傳遞密碼給後端驗證，如果需要
+    // 👈 替換為 API 呼叫
+    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/admin/reset`, body));
+    // GPL-3.0
+    // Succeeded
+    // 成功後，更新本地狀態
+    this.fetchStudents(); 
+  }
+}

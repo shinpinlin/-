@@ -44,7 +44,7 @@ export class StudentViewComponent {
   readonly leaveTypes: LeaveType[] = ['病假', '事假', '論文假', '其他'];
 
   currentStatus = computed(() => {
-    this.languageService.language(); // Establish dependency on language change
+    this.languageService.language(); // Establish dependency on the signal
     const user = this.currentUser();
     if (!user) return this.languageService.translate('student.loggingOut');
     
@@ -65,9 +65,8 @@ export class StudentViewComponent {
     if (!user) return;
     
     if (this.leaveType() === '其他' && !this.remarks().trim()) {
-      const alertMessage = this.languageService.translate('student.remarks') + ` (` + this.languageService.translate('student.remarksRequired') + `)`;
-      // 警告：避免使用 alert()
-      console.warn(alertMessage); 
+      // 關鍵修正：移除 alert()
+      console.warn(this.languageService.translate('student.remarks') + ` (` + this.languageService.translate('student.remarksRequired') + `)`);
       return;
     }
 
@@ -78,7 +77,7 @@ export class StudentViewComponent {
         this.showLeaveForm.set(false);
     } catch (error) {
         console.error('Failed to submit leave application', error);
-        // 警告：避免使用 alert()
+        // 關鍵修正：移除 alert()
         console.error(this.languageService.translate('errors.leaveSubmitFailed'));
     } finally {
         this.isSubmitting.set(false);
