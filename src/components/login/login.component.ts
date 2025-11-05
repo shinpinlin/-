@@ -18,6 +18,7 @@ export class LoginComponent {
   adminLoginSuccess = output<void>();
 
   studentId = signal('');
+  studentName = signal(''); // <-- 新增：用於綁定姓名輸入框
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   
@@ -27,15 +28,16 @@ export class LoginComponent {
   async handleStudentLogin() {
     this.errorMessage.set(null);
     const id = this.studentId().trim();
+    const name = this.studentName().trim(); // <-- 取得姓名
 
-    if (!id) {
+    if (!id || !name) { // <-- 檢查姓名是否為空
         this.errorMessage.set(this.languageService.translate('errors.emptyFields'));
         return;
     }
     
     this.isLoading.set(true);
     try {
-      const student = await this.studentService.login(id);
+      const student = await this.studentService.login(id, name); // <-- 修正：傳遞 name
       this.studentLoginSuccess.emit(student);
     } catch (error) {
       console.error("Login failed", error);
