@@ -66,18 +66,20 @@ export class StudentViewComponent {
     
     if (this.leaveType() === '其他' && !this.remarks().trim()) {
       const alertMessage = this.languageService.translate('student.remarks') + ` (` + this.languageService.translate('student.remarksRequired') + `)`;
-      alert(alertMessage);
+      // 警告：避免使用 alert()
+      console.warn(alertMessage); 
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
     try {
         await this.studentService.applyForLeave(user.id, this.leaveType(), this.remarks());
         this.leaveSubmitted.set(true);
         this.showLeaveForm.set(false);
     } catch (error) {
         console.error('Failed to submit leave application', error);
-        alert(this.languageService.translate('errors.leaveSubmitFailed'));
+        // 警告：避免使用 alert()
+        console.error(this.languageService.translate('errors.leaveSubmitFailed'));
     } finally {
         this.isSubmitting.set(false);
     }
