@@ -10,7 +10,8 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
   selector: 'app-admin-view',
   templateUrl: './admin-view.component.html',
   standalone: true,
-  [CommonModule, FormsModule], //,
+  // 修正點：移除多餘的 DatePipe 和 LanguageSwitcherComponent 以解決 TS 警告/錯誤
+  imports: [CommonModule, FormsModule], 
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminViewComponent {
@@ -64,7 +65,6 @@ export class AdminViewComponent {
     }
 
     return filtered;
-    // 之前錯誤發生的位置，現在已修正為返回 filtered
   });
 
   toggleAbsentFilter(): void {
@@ -111,11 +111,10 @@ export class AdminViewComponent {
       alert(this.languageService.translate('admin.export.noAbsentStudents'));
       return;
     }
-    
+
     const header = '學號,姓名,狀態,假別,備註\n';
     const csvRows = absentStudents.map(s => {
       const remarks = s.leaveRemarks || '';
-      // Escape quotes by doubling them, and wrap in quotes if it contains comma or quote
       const sanitizedRemarks = `"${remarks.replace(/"/g, '""')}"`;
       const leaveType = s.leaveType || '';
       return `${s.id},${s.name},${s.status},${leaveType},${sanitizedRemarks}`;
@@ -125,10 +124,10 @@ export class AdminViewComponent {
     const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
-    // 最終修正：直接使用一個通用的檔名，避免 isEvening 錯誤
+
+    // 最終修正：直接指定一個檔名
     const filename = `${this.languageService.translate('admin.export.absentFileName')}_${new Date().toISOString().slice(0,10)}.csv`;
-    
+
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
@@ -153,7 +152,7 @@ export class AdminViewComponent {
   async confirmDelete(): Promise<void> {
     const student = this.studentToDelete();
     if (!student) return;
-    
+
     if (this.deletePasswordInput() !== '119') {
       this.deletePasswordError.set(this.languageService.translate('errors.passwordIncorrect'));
       this.deletePasswordInput.set('');
