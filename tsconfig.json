@@ -1,61 +1,33 @@
 {
-
   "compilerOptions": {
-
     "target": "ES2022",
-
     "experimentalDecorators": true,
-
     "useDefineForClassFields": false,
-
     "module": "ESNext",
-
     "lib": [
-
       "ES2022",
-
       "DOM",
-
       "DOM.Iterable"
-
     ],
-
     "skipLibCheck": true,
-
-    : [//
-
-      "node"
-
+    "types": [ 
+      // 關鍵修正：屬性名稱 "types" 已加上，並且陣列已清空，以解決 TS2322 錯誤。
     ],
-
     "moduleResolution": "bundler",
-
     "isolatedModules": true,
-
     "moduleDetection": "force",
-
     "allowJs": true,
-
     "jsx": "react-jsx",
-
     "paths": {
-
       "@/*": [
-
         "./*"
-
       ]
-
     }
-
   },
-
   "files": [
-
     "./index.tsx"
-
   ],
-
   "angularCompilerOptions": {
-
     "disableTypeScriptVersionCheck": true
+  }
+}

@@ -4,13 +4,13 @@ import { CommonModule } from '@angular/common';
 import { Student, LeaveType } from '../../models/student.model';
 import { StudentService } from '../../services/student.service';
 import { LanguageService } from '../../services/language.service';
-// 移除 LanguageSwitcherComponent 匯入
+// 關鍵修正：移除 LanguageSwitcherComponent 匯入
 
 @Component({
   selector: 'app-student-view',
   templateUrl: './student-view.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule], // 👈 修正：從 imports 陣列中移除 LanguageSwitcherComponent
+  imports: [CommonModule, FormsModule], // 👈 關鍵修正：從 imports 陣列中移除 LanguageSwitcherComponent
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentViewComponent {
@@ -70,7 +70,7 @@ export class StudentViewComponent {
       return;
     }
 
-    this.isSubmitting.set(true);
+    this.isSubmitting = true;
     try {
         await this.studentService.applyForLeave(user.id, this.leaveType(), this.remarks());
         this.leaveSubmitted.set(true);
