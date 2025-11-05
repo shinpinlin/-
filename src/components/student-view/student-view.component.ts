@@ -3,12 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Student, LeaveType } from '../../models/student.model';
 import { StudentService } from '../../services/student.service';
+import { LanguageService } from '../../services/language.service';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-student-view',
   templateUrl: './student-view.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LanguageSwitcherComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentViewComponent {
@@ -22,6 +24,7 @@ export class StudentViewComponent {
   isSubmitting = signal(false);
   
   private studentService = inject(StudentService);
+  public languageService = inject(LanguageService);
 
   // Reactive signal that tracks the current user's state from the service
   currentUser = computed(() => 
@@ -41,31 +44,42 @@ export class StudentViewComponent {
   readonly leaveTypes: LeaveType[] = ['病假', '事假', '論文假', '其他'];
 
   currentStatus = computed(() => {
+    this.languageService.language(); // Establish dependency on language change
     const user = this.currentUser();
-    if (!user) return '正在登出...';
-    if (user.status === '出席') return '您目前的狀態為：出席';
-    if (user.status === '請假') return `您已請假 (假別：${user.leaveType})`;
-    return `您目前的狀態為：${user.status}`;
+    if (!user) return this.languageService.translate('student.loggingOut');
+    
+    const statusKey = `statuses.${user.status}`;
+    const translatedStatus = this.languageService.translate(statusKey);
+
+    if (user.status === '出席') return this.languageService.translate('student.status.present');
+    if (user.status === '請假' && user.leaveType) {
+        const leaveTypeKey = `leaveTypes.${user.leaveType}`;
+        const translatedLeaveType = this.languageService.translate(leaveTypeKey);
+        return this.languageService.translate('student.status.onLeave', { leaveType: translatedLeaveType });
+    }
+    return this.languageService.translate('student.status.generic', { status: translatedStatus });
   });
 
   async submitLeave() {
+    const user = this.currentUser();
+    if (!user) return;
+    
     if (this.leaveType() === '其他' && !this.remarks().trim()) {
-      alert('選擇「其他」假別時，請務必填寫備註。');
+      const alertMessage = this.languageService.translate('student.remarks') + ` (` + this.languageService.translate('student.remarksRequired') + `)`;
+      alert(alertMessage);
       return;
     }
-    const user = this.currentUser();
-    if (user) {
-        this.isSubmitting.set(true);
-        try {
-            await this.studentService.applyForLeave(user.id, this.leaveType(), this.remarks());
-            this.leaveSubmitted.set(true);
-            this.showLeaveForm.set(false);
-        } catch (error) {
-            console.error('Failed to submit leave application', error);
-            alert('提交請假申請失敗，請稍後再試。');
-        } finally {
-            this.isSubmitting.set(false);
-        }
+
+    this.isSubmitting.set(true);
+    try {
+        await this.studentService.applyForLeave(user.id, this.leaveType(), this.remarks());
+        this.leaveSubmitted.set(true);
+        this.showLeaveForm.set(false);
+    } catch (error) {
+        console.error('Failed to submit leave application', error);
+        alert(this.languageService.translate('errors.leaveSubmitFailed'));
+    } finally {
+        this.isSubmitting.set(false);
     }
   }
 }

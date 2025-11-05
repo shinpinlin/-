@@ -3,12 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { Student } from '../../models/student.model';
 import { StudentService } from '../../services/student.service';
 import { CommonModule } from '@angular/common';
+import { LanguageService } from '../../services/language.service';
+import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, LanguageSwitcherComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
@@ -21,9 +23,7 @@ export class LoginComponent {
   errorMessage = signal<string | null>(null);
   
   private studentService = inject(StudentService);
-
-  // The 'Remember Me' feature was removed as we are moving away from localStorage
-  // to simulate a backend-driven application where sessions would be handled differently.
+  public languageService = inject(LanguageService);
 
   async handleStudentLogin() {
     this.errorMessage.set(null);
@@ -31,7 +31,7 @@ export class LoginComponent {
     const name = this.studentName().trim();
 
     if (!id || !name) {
-        this.errorMessage.set('學號和姓名不能為空');
+        this.errorMessage.set(this.languageService.translate('errors.emptyFields'));
         return;
     }
     
@@ -41,7 +41,8 @@ export class LoginComponent {
       this.studentLoginSuccess.emit(student);
     } catch (error) {
       console.error("Login failed", error);
-      this.errorMessage.set('登入失敗，請稍後再試。');
+      const messageKey = error instanceof Error ? error.message : 'errors.loginFailed';
+      this.errorMessage.set(this.languageService.translate(messageKey));
     } finally {
       this.isLoading.set(false);
     }

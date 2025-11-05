@@ -1,0 +1,47 @@
+<div class="flex items-center bg-gray-200 dark:bg-gray-700 rounded-full p-1 text-sm flex-wrap">
+  <button
+    (click)="languageService.setLanguage('zh-TW')"
+    class="px-3 py-1 rounded-full transition-colors duration-300"
+    [class]="languageService.language() === 'zh-TW' 
+      ? 'bg-white dark:bg-gray-900 text-gray-800 dark:text-white shadow' 
+      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'"
+  >
+    繁體中文
+  </button>
+  <button
+    (click)="languageService.setLanguage('en')"
+    class="px-3 py-1 rounded-full transition-colors duration-300"
+    [class]="languageService.language() === 'en' 
+      ? 'bg-white dark:bg-gray-900 text-gray-800 dark:text-white shadow' 
+      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'"
+  >
+    English
+  </button>
+  <button
+    (click)="languageService.setLanguage('vi')"
+    class="px-3 py-1 rounded-full transition-colors duration-300"
+    [class]="languageService.language() === 'vi' 
+      ? 'bg-white dark:bg-gray-900 text-gray-800 dark:text-white shadow' 
+      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'"
+  >
+    Tiếng Việt
+  </button>
+  <button
+    (click)="languageService.setLanguage('th')"
+    class="px-3 py-1 rounded-full transition-colors duration-300"
+    [class]="languageService.language() === 'th' 
+      ? 'bg-white dark:bg-gray-900 text-gray-800 dark:text-white shadow' 
+      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'"
+  >
+    ภาษาไทย
+  </button>
+  <button
+    (click)="languageService.setLanguage('id')"
+    class="px-3 py-1 rounded-full transition-colors duration-300"
+    [class]="languageService.language() === 'id' 
+      ? 'bg-white dark:bg-gray-900 text-gray-800 dark:text-white shadow' 
+      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'"
+  >
+    Indonesia
+  </button>
+</div>
