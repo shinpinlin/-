@@ -120,12 +120,12 @@ const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
   providedIn: 'root',
 })
 export class StudentService {
-  // 👈 新增：定義後端 API 網址，假設後端端點在 /api/v1/ 下
+  // 👈 新增：定義後端 API 網址，假設所有 API 端點都在 /api/v1/ 下
   private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com/api/v1';
 
   private _students = signal<Student[]>([]);
   private platformId = inject(PLATFORM_ID);
-  private http = inject(HttpClient); // 👈 新增：注入 HttpClient 服務
+  private http = inject(HttpClient); // 👈 注入 HttpClient 服務
 
   // Time-related signals for roll call period
   private readonly _isEvening = signal(false);
@@ -161,7 +161,7 @@ export class StudentService {
 
       if (this.isInitialEffectRun) {
         this.isInitialEffectRun = false;
-        // 👈 載入狀態後，首次運行時應從後端獲取最新狀態
+        // 載入狀態後，首次運行時應從後端獲取最新狀態
         this.fetchStudents(); 
         return;
       }
@@ -171,4 +171,175 @@ export class StudentService {
       this.resetToInitialList(); 
     });
 
-    if
+    if (isPlatformBrowser(this.platformId)) {
+      this.updateCountdown();
+      // 👈 修正 TS2322 錯誤，使用 number 類型斷言
+      this.countdownInterval = setInterval(() => this.updateCountdown(), 1000) as unknown as number;
+    }
+  }
+
+  // ***************************************************************
+  // 狀態管理（保留本地邏輯）
+  // ***************************************************************
+
+  /**
+   * 從後端獲取當前學生狀態，並更新本地 Signal
+   */
+  public async fetchStudents(): Promise<void> {
+    try {
+      // 假設後端有一個 /api/v1/students 端點回傳當前所有學生的狀態
+      const studentsData = await firstValueFrom(
+        this.http.get<Student[]>(`${this.API_BASE_URL}/students`)
+      );
+      // 確保將 lastUpdatedAt 轉換為 Date 物件
+      const studentsWithDates = studentsData.map(s => ({
+        ...s,
+        lastUpdatedAt: new Date(s.lastUpdatedAt),
+      }));
+      this._students.set(studentsWithDates);
+    } catch (e) {
+      console.error('Failed to fetch student status from backend', e);
+      // 如果獲取失敗，可以使用本地狀態作為 fallback
+    }
+  }
+
+  /**
+   * Loads the student list from localStorage if available, otherwise initializes a new list. (保留)
+   */
+  private loadState(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedData) {
+          const parsedStudents: Student[] = JSON.parse(savedData);
+          const studentsWithDates = parsedStudents.map(s => ({
+            ...s,
+            lastUpdatedAt: new Date(s.lastUpdatedAt),
+          }));
+          this._students.set(studentsWithDates);
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to load or parse state from localStorage', e);
+      }
+    }
+    this.setInitialList();
+  }
+
+  /**
+   * Saves the current student list to localStorage. (保留)
+   */
+  private saveState(students: Student[]): void {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(students));
+      } catch (e) {
+        console.error('Failed to save state to localStorage', e);
+      }
+    }
+  }
+
+  /**
+   * Sets the student list to the default state from the master roster. (保留)
+   * By default, all students are marked as '缺席'.
+   */
+  private setInitialList(): void {
+    const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
+      id: s.id,
+      name: s.name,
+      status: '缺席',
+      lastUpdatedAt: new Date(),
+    }));
+    this._students.set(initialStudents);
+  }
+  
+  private updateCountdown(): void {
+    const now = new Date();
+    
+    const morningCutoff = new Date(now);
+    morningCutoff.setHours(9, 30, 0, 0);
+
+    const eveningCutoff = new Date(now);
+    eveningCutoff.setHours(21, 30, 0, 0);
+
+    let isCurrentlyEvening: boolean;
+    let nextTransitionTime: Date;
+
+    // From 09:30 to 21:30 is now considered Evening Roll Call
+    if (now >= morningCutoff && now < eveningCutoff) {
+      isCurrentlyEvening = true; 
+      nextTransitionTime = eveningCutoff;
+    } else {
+      // Outside 09:30 to 21:30 is now considered Morning Roll Call
+      isCurrentlyEvening = false; 
+      if (now < morningCutoff) {
+        nextTransitionTime = morningCutoff;
+      } else {
+        nextTransitionTime = new Date(now);
+        nextTransitionTime.setDate(nextTransitionTime.getDate() + 1);
+        nextTransitionTime.setHours(9, 30, 0, 0);
+      }
+    }
+
+    this._isEvening.set(isCurrentlyEvening);
+
+    const timeDifference = nextTransitionTime.getTime() - now.getTime();
+    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
+    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
+    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
+
+    const formattedCountdown = 
+      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    this._countdown.set(formattedCountdown);
+  }
+
+  // ***************************************************************
+  // 核心操作 (替換為 API 呼叫)
+  // ***************************************************************
+
+  /**
+   * 學生登入並標記為「出席」
+   */
+  async login(studentId: string): Promise<Student> {
+    // 👈 替換為 API 呼叫
+    const loggedInStudent = await firstValueFrom(
+      this.http.post<Student>(`${this.API_BASE_URL}/login`, { studentId })
+    );
+    // 成功後，更新本地狀態並返回學生資訊
+    this.fetchStudents(); 
+    return loggedInStudent;
+  }
+
+  /**
+   * 學生申請請假
+   */
+  async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
+    const body = { studentId, leaveType, remarks };
+    // 👈 替換為 API 呼叫
+    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/leave`, body));
+    // 成功後，更新本地狀態
+    this.fetchStudents(); 
+  }
+
+  /**
+   * 管理員刪除學生
+   */
+  async deleteStudent(studentId: string): Promise<void> {
+    // 👈 替換為 API 呼叫
+    await firstValueFrom(this.http.delete<void>(`${this.API_BASE_URL}/students/${studentId}`));
+    // 成功後，更新本地狀態
+    this.fetchStudents(); 
+  }
+  
+  /**
+   * 管理員重置所有學生的狀態
+   */
+  async resetToInitialList(adminPassword?: string): Promise<void> {
+    const body = { password: adminPassword }; // 傳遞密碼給後端驗證，如果需要
+    // 👈 替換為 API 呼叫
+    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/admin/reset`, body));
+    // 成功後，更新本地狀態
+    this.fetchStudents(); 
+  }
+}
