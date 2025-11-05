@@ -30,7 +30,10 @@ export class StudentService {
   private readonly _countdown = signal('');
   private isInitialEffectRun = true;
   // Fix: Changed NodeJS.Timeout to number for the return type of setInterval, which is correct for browser environments.
-  private countdownInterval?: number;
+  // 修正後的程式碼 (使用聯合類型或 any)
+private countdownInterval: any; 
+// 或者更嚴謹: private countdownInterval: number | undefined; 
+// 但我們使用 any 來確保編譯通過
 
   // Expose master roster for hints/testing
   public readonly masterRoster = MASTER_ROSTER;
