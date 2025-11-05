@@ -10,8 +10,8 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
-    "types": [ 
-      // 關鍵修正：屬性名稱 "types" 已加上，並且陣列已清空，以解決 TS2322 錯誤。
+    ": [ //
+      "node" 
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,

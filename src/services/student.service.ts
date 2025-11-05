@@ -5,7 +5,7 @@ import { Student, StudentStatus, LeaveType } from '../models/student.model';
 import { firstValueFrom } from 'rxjs'; // 👈 新增：用於將 Observable 轉換為 Promise
 
 // Helper to simulate network latency (保留但未使用)
-const fakeApiCall = (delay: number = 500): Promise<void> => {
+const HttpClient = (delay: number = 500): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, delay));
 };
 
@@ -120,7 +120,7 @@ const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
 })
 export class StudentService {
   // 👈 定義後端 API 網址，假設所有 API 端點都在 /api/v1/ 下
-  private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com/api/v1';
+  private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com';
 
   private _students = signal<Student[]>([]);
   private platformId = inject(PLATFORM_ID);
@@ -171,8 +171,7 @@ export class StudentService {
 
     if (isPlatformBrowser(this.platformId)) {
       this.updateCountdown();
-      // 👈 修正 TS2322 錯誤，使用 number 類型斷言
-      this.countdownInterval = setInterval(() => this.updateCountdown(), 1000) as unknown as number;
+      //       this.countdownInterval = setInterval as unknown as number;
     }
   }
 
