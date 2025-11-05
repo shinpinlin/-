@@ -123,10 +123,7 @@ export class AdminViewComponent {
     const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    const rollCallType = this.studentService.isEvening() ? 
-        this.languageService.translate('admin.export.eveningFileName') : 
-        this.languageService.translate('admin.export.morningFileName');
-    const filename = `${rollCallType}_${new Date().toISOString().slice(0,10)}.csv`;
+    const filename = `Absent_List_${new Date().toISOString().slice(0,10)}.csv`;
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
@@ -142,7 +139,10 @@ export class AdminViewComponent {
   }
 
   cancelDelete(): void {
-    this.showDeleteConfirmModal.set(false);
+    this.showDeleteConfirmModal.set(false);const rollCallType = this.studentService.isEvening() ? 
+    this.languageService.translate('admin.export.eveningFileName') : 
+    this.languageService.translate('admin.export.morningFileName');
+const filename = `${rollCallType}_${new Date().toISOString().slice(0,10)}.csv`;
     this.studentToDelete.set(null);
     this.deletePasswordInput.set('');
     this.deletePasswordError.set(null);
