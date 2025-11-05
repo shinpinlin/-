@@ -1,13 +1,15 @@
 import { Injectable, signal, computed, effect, PLATFORM_ID, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http'; // 👈 新增：引入 HttpClient
 import { isPlatformBrowser } from '@angular/common';
 import { Student, StudentStatus, LeaveType } from '../models/student.model';
+import { firstValueFrom } from 'rxjs'; // 👈 新增：用於將 Observable 轉換為 Promise
 
-// Helper to simulate network latency
+// Helper to simulate network latency (保留但未使用)
 const fakeApiCall = (delay: number = 500): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, delay));
 };
 
-// A pre-defined master list of all students in the class.
+// A pre-defined master list of all students in the class. (保留原始資料)
 // In a real application, this would come from a database.
 const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1123003', name: '謝時臻' },
@@ -118,8 +120,12 @@ const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
   providedIn: 'root',
 })
 export class StudentService {
+  // 👈 新增：定義後端 API 網址，假設後端端點在 /api/v1/ 下
+  private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com/api/v1';
+
   private _students = signal<Student[]>([]);
   private platformId = inject(PLATFORM_ID);
+  private http = inject(HttpClient); // 👈 新增：注入 HttpClient 服務
 
   // Time-related signals for roll call period
   private readonly _isEvening = signal(false);
@@ -128,7 +134,7 @@ export class StudentService {
   // Fix: Changed NodeJS.Timeout to number for the return type of setInterval, which is correct for browser environments.
   private countdownInterval?: number;
 
-  // Expose master roster for hints/testing
+  // Expose master roster for hints/testing (保留)
   public readonly masterRoster = MASTER_ROSTER;
 
   // Public readonly signals for consumption by components
@@ -143,7 +149,7 @@ export class StudentService {
   constructor() {
     this.loadState();
     
-    // This effect automatically saves the state to localStorage whenever it changes.
+    // This effect automatically saves the state to localStorage whenever it changes. (保留)
     effect(() => {
       const students = this._students();
       this.saveState(students);
@@ -155,176 +161,14 @@ export class StudentService {
 
       if (this.isInitialEffectRun) {
         this.isInitialEffectRun = false;
+        // 👈 載入狀態後，首次運行時應從後端獲取最新狀態
+        this.fetchStudents(); 
         return;
       }
 
       console.log('Roll call period changed. Resetting all students to "Present".');
-      this.resetToInitialList();
+      // 由於狀態現在由後端管理，這裡只呼叫後端重置 API
+      this.resetToInitialList(); 
     });
 
-    if (isPlatformBrowser(this.platformId)) {
-      this.updateCountdown();
-      this.countdownInterval = setInterval(() => this.updateCountdown(), 1000);
-    }
-  }
-
-  /**
-   * Loads the student list from localStorage if available, otherwise initializes a new list.
-   */
-  private loadState(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      try {
-        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (savedData) {
-          const parsedStudents: Student[] = JSON.parse(savedData);
-          const studentsWithDates = parsedStudents.map(s => ({
-            ...s,
-            lastUpdatedAt: new Date(s.lastUpdatedAt),
-          }));
-          this._students.set(studentsWithDates);
-          return;
-        }
-      } catch (e) {
-        console.error('Failed to load or parse state from localStorage', e);
-      }
-    }
-    this.setInitialList();
-  }
-
-  /**
-   * Saves the current student list to localStorage.
-   */
-  private saveState(students: Student[]): void {
-    if (isPlatformBrowser(this.platformId)) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(students));
-      } catch (e) {
-        console.error('Failed to save state to localStorage', e);
-      }
-    }
-  }
-
-  /**
-   * Sets the student list to the default state from the master roster.
-   * By default, all students are marked as '缺席'.
-   */
-  private setInitialList(): void {
-    const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
-      id: s.id,
-      name: s.name,
-      status: '缺席',
-      lastUpdatedAt: new Date(),
-    }));
-    this._students.set(initialStudents);
-  }
-  
-  private updateCountdown(): void {
-    const now = new Date();
-    
-    const morningCutoff = new Date(now);
-    morningCutoff.setHours(9, 30, 0, 0);
-
-    const eveningCutoff = new Date(now);
-    eveningCutoff.setHours(21, 30, 0, 0);
-
-    let isCurrentlyEvening: boolean;
-    let nextTransitionTime: Date;
-
-    // From 09:30 to 21:30 is now considered Evening Roll Call
-    if (now >= morningCutoff && now < eveningCutoff) {
-      isCurrentlyEvening = true; 
-      nextTransitionTime = eveningCutoff;
-    } else {
-      // Outside 09:30 to 21:30 is now considered Morning Roll Call
-      isCurrentlyEvening = false; 
-      if (now < morningCutoff) {
-        nextTransitionTime = morningCutoff;
-      } else {
-        nextTransitionTime = new Date(now);
-        nextTransitionTime.setDate(nextTransitionTime.getDate() + 1);
-        nextTransitionTime.setHours(9, 30, 0, 0);
-      }
-    }
-
-    this._isEvening.set(isCurrentlyEvening);
-
-    const timeDifference = nextTransitionTime.getTime() - now.getTime();
-    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
-    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
-    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
-
-    const formattedCountdown = 
-      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    
-    this._countdown.set(formattedCountdown);
-  }
-
-  async login(studentId: string): Promise<Student> {
-    await fakeApiCall();
-
-    const studentFromRoster = MASTER_ROSTER.find(s => s.id === studentId);
-    
-    if (!studentFromRoster) {
-      throw new Error('errors.studentIdNotFound');
-    }
-
-    // Check if the student exists in the current list. If not, they might have been deleted.
-    const studentExistsInState = this._students().some(s => s.id === studentId);
-    if (!studentExistsInState) {
-        // Re-using this error message, as from the user's perspective, their ID is not valid for login at this moment.
-        throw new Error('errors.studentIdNotFound');
-    }
-
-    let loggedInStudent!: Student;
-    this._students.update(currentStudents =>
-      currentStudents.map(s => {
-        if (s.id === studentId) {
-          loggedInStudent = {
-            ...s,
-            status: '出席',
-            leaveType: undefined,
-            leaveRemarks: undefined,
-            lastUpdatedAt: new Date(),
-          };
-          return loggedInStudent;
-        }
-        return s;
-      })
-    );
-    
-    return loggedInStudent;
-  }
-
-  async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
-    await fakeApiCall();
-    this._students.update(students => 
-      students.map(s => {
-        if (s.id === studentId) {
-          return { ...s, status: '請假', leaveType: leaveType, leaveRemarks: remarks, lastUpdatedAt: new Date() };
-        }
-        return s;
-      })
-    );
-  }
-
-  async deleteStudent(studentId: string): Promise<void> {
-    await fakeApiCall();
-    this._students.update(students => students.filter(s => s.id !== studentId));
-  }
-  
-  /**
-   * Resets all students from the master roster to '出席' status.
-   */
-  async resetToInitialList(): Promise<void> {
-    await fakeApiCall(1000);
-    const resetStudents: Student[] = MASTER_ROSTER.map(s => ({
-      id: s.id,
-      name: s.name,
-      status: '出席',
-      leaveType: undefined,
-      leaveRemarks: undefined,
-      lastUpdatedAt: new Date(),
-    }));
-    this._students.set(resetStudents);
-  }
-}
+    if
