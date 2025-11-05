@@ -23,21 +23,6 @@
         >
       </div>
 
-      <div>
-        <label for="studentName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          {{ languageService.translate('common.name') }}
-        </label>
-        <input
-          id="studentName"
-          type="text"
-          [ngModel]="studentName()"
-          (ngModelChange)="studentName.set($event)"
-          name="studentName"
-          placeholder="e.g., 林訓平"
-          class="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
-        >
-      </div>
-
       @if (errorMessage()) {
         <div class="text-sm text-red-500">
           {{ errorMessage() }}
