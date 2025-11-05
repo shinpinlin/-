@@ -102,14 +102,14 @@ export class AdminViewComponent {
       this.resetPasswordInput.set('');
     }
   }
-  
+
   exportAbsentList(): void {
     const absentStudents = this.studentService.students().filter(s => s.status !== '出席');
     if (absentStudents.length === 0) {
       alert(this.languageService.translate('admin.export.noAbsentStudents'));
       return;
     }
-    
+
     const header = '學號,姓名,狀態,假別,備註\n';
     const csvRows = absentStudents.map(s => {
       const remarks = s.leaveRemarks || '';
@@ -123,7 +123,10 @@ export class AdminViewComponent {
     const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    const filename = `Absent_List_${new Date().toISOString().slice(0,10)}.csv`;
+    // --- 修正點：移除對 isEvening 的依賴 ---
+    // 我們直接指定一個檔名，避免編譯錯誤
+    const filename = `${this.languageService.translate('admin.export.absentFileName')}_${new Date().toISOString().slice(0,10)}.csv`;
+
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
@@ -139,10 +142,7 @@ export class AdminViewComponent {
   }
 
   cancelDelete(): void {
-    this.showDeleteConfirmModal.set(false);const rollCallType = this.studentService.isEvening() ? 
-    this.languageService.translate('admin.export.eveningFileName') : 
-    this.languageService.translate('admin.export.morningFileName');
-const filename = `${rollCallType}_${new Date().toISOString().slice(0,10)}.csv`;
+    this.showDeleteConfirmModal.set(false);
     this.studentToDelete.set(null);
     this.deletePasswordInput.set('');
     this.deletePasswordError.set(null);
@@ -151,7 +151,7 @@ const filename = `${rollCallType}_${new Date().toISOString().slice(0,10)}.csv`;
   async confirmDelete(): Promise<void> {
     const student = this.studentToDelete();
     if (!student) return;
-    
+
     if (this.deletePasswordInput() !== '119') {
       this.deletePasswordError.set(this.languageService.translate('errors.passwordIncorrect'));
       this.deletePasswordInput.set('');
