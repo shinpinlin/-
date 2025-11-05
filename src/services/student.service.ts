@@ -1,121 +1,331 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, effect, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Student, StudentStatus, LeaveType } from '../models/student.model';
-import { HttpClient } from '@angular/common/http'; 
-import { firstValueFrom } from 'rxjs'; 
+
+// Helper to simulate network latency
+const fakeApiCall = (delay: number = 500): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, delay));
+};
+
+// A pre-defined master list of all students in the class.
+// In a real application, this would come from a database.
+const MASTER_ROSTER: { id: string, name: string }[] = [
+  // 請在此處貼上您的學生名單
+  { "id": "1123003", "name": "謝時臻" },
+  { "id": "1123025", "name": "陳靖" },
+  { "id": "1123047", "name": "吳昀軒" },
+  { "id": "1123065", "name": "吳玟璇" },
+  { "id": "1123066", "name": "黃建岷" },
+  { "id": "1123090", "name": "歐陽佑昌" },
+  { "id": "1123098", "name": "簡聖修" },
+  { "id": "1123113", "name": "林彥君" }
+  { "id": "1133080", "name": "蘇筠媗" }, 
+  { "id": "1133081", "name": "廖曉慧" },
+  { "id": "1133082", "name": "黃子銘" },
+  { "id": "1133084", "name": "張仕學" },
+  { "id": "1133085", "name": "黃奕誠" },
+  { "id": "1133086", "name": "林冠宏" },
+  { "id": "1133091", "name": "曾映竹" },
+  { "id": "1133092", "name": "陳俊宇" },
+  { "id": "1133093", "name": "劉兆軒" },
+  { "id": "1133094", "name": "黃威程" },
+  { "id": "1133095", "name": "李潛昕" },
+  { "id": "1133101", "name": "薩滿" },
+  { "id": "1133102", "name": "張昕程" },
+  { "id": "1133103", "name": "王瑞亞" },
+  { "id": "1133104", "name": "毛仁笛" },
+  { "id": "1133105", "name": "雷漢森" },
+  { "id": "1133106", "name": "哈志豪" },
+  { "id": "1133107", "name": "凃明" },
+  { "id": "1133108", "name": "高以理" },
+  { "id": "1133001", "name": "陳儒頡" },
+  { "id": "1133002", "name": "邱浴鈞" },
+  { "id": "1133003", "name": "張羨茿" },
+  { "id": "1133013", "name": "許淞棓" },
+  { "id": "1133014", "name": "張晴媗" },
+  { "id": "1133026", "name": "安祐萱" },
+  { "id": "1133027", "name": "潘玟菱" },
+  { "id": "1133032", "name": "施韋吉" },
+  { "id": "1133033", "name": "葉冠愷" },
+  { "id": "1133035", "name": "李柏諠" },
+  { "id": "1133036", "name": "翁達翰" },
+  { "id": "1133037", "name": "高爾義" },
+  { "id": "1133038", "name": "高睿宏" },
+  { "id": "1133044", "name": "吳育鑫" },
+  { "id": "1133048", "name": "鄭偉民" },
+  { "id": "1133057", "name": "李旻晃" },
+  { "id": "1133058", "name": "潘啟文" },
+  { "id": "1133064", "name": "林書瑋" },
+  { "id": "1133065", "name": "林子琦" },
+  { "id": "1133068", "name": "曾資淵" },
+  { "id": "1133069", "name": "黃宇賢" },
+  { "id": "1133071", "name": "林士欽" },
+  { "id": "1133072", "name": "張家瑋" },
+  { "id": "1133073", "name": "陳志豪" },
+  { "id": "1143001", "name": "楊梓邑" },
+  { "id": "1143002", "name": "楊仁瑋" },
+  { "id": "1143003", "name": "黃映潔" },
+  { "id": "1143021", "name": "張雅珺" },
+  { "id": "1143022", "name": "曹孝弘" },
+  { "id": "1143023", "name": "呂欣澤" },
+  { "id": "1143035", "name": "李思賢" },
+  { "id": "1143036", "name": "張家銓" },
+  { "id": "1143037", "name": "陳嘉瑜" },
+  { "id": "1143042", "name": "林訓平" },
+  { "id": "1143043", "name": "范姜群傑" },
+  { "id": "1143044", "name": "陳梅齡" },
+  { "id": "1143045", "name": "劉宇傑" },
+  { "id": "1143046", "name": "黃冠博" },
+  { "id": "1143048", "name": "張育梓" },
+  { "id": "1143049", "name": "林文澤" },
+  { "id": "1143050", "name": "唐晏鐸" },
+  { "id": "1143051", "name": "柯宜欣" },
+  { "id": "1143055", "name": "陳毅言" },
+  { "id": "1143056", "name": "鄭睦羽" },
+  { "id": "1143057", "name": "彭軒" },
+  { "id": "1143063", "name": "李柏亨" },
+  { "id": "1143064", "name": "歐宜勛" },
+  { "id": "1143065", "name": "林冠甫" },
+  { "id": "1143066", "name": "楊子嫻" },
+  { "id": "1143077", "name": "蔡承恩" },
+  { "id": "1143078", "name": "廖右安" },
+  { "id": "1143085", "name": "王冠中" },
+  { "id": "1143089", "name": "朱婉容" },
+  { "id": "1143090", "name": "張郁閔" },
+  { "id": "1143091", "name": "廖正豪" },
+  { "id": "1143096", "name": "洪德諭" },
+  { "id": "1143097", "name": "王寅兒" },
+  { "id": "1143098", "name": "林品瑜" },
+  { "id": "1143102", "name": "黃端陽" },
+  { "id": "1143103", "name": "朱曜東" },
+  { "id": "1143104", "name": "魏茂屹" },
+  { "id": "1143114", "name": "謝豐安" },
+  { "id": "1143115", "name": "吳東翰" },
+  { "id": "1143119", "name": "張雅筑" },
+  { "id": "1143125", "name": "卜謙學" },
+  { "id": "1143126", "name": "利輝煌" },
+  { "id": "1143127", "name": "涂俊偉" },
+  { "id": "1143128", "name": "李童發" },
+  { "id": "1143129", "name": "洪明翰" },
+  { "id": "1143130", "name": "羅文傑" },
+  { "id": "1143131", "name": "吳曉天" },
+  { "id": "1143132", "name": "楊佳玲" },
+  { "id": "1143133", "name": "李珮安" },
+];
+
+const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
 
 @Injectable({
   providedIn: 'root',
 })
 export class StudentService {
-  // 修正 TS2322 錯誤：移除計時器相關變數，因為我們不再需要它
-  // private countdownInterval: any; // 移除計時器
-
   private _students = signal<Student[]>([]);
+  private platformId = inject(PLATFORM_ID);
 
+  // Time-related signals for roll call period
+  private readonly _isEvening = signal(false);
+  private readonly _countdown = signal('');
+  private isInitialEffectRun = true;
+  // Fix: Changed NodeJS.Timeout to number for the return type of setInterval, which is correct for browser environments.
+  private countdownInterval?: number;
+
+  // Expose master roster for hints/testing
+  public readonly masterRoster = MASTER_ROSTER;
+
+  // Public readonly signals for consumption by components
   public students = this._students.asReadonly();
-
+  public isEvening = this._isEvening.asReadonly();
+  public countdown = this._countdown.asReadonly();
+  
   public totalStudents = computed(() => this._students().length);
   public presentStudents = computed(() => this._students().filter(s => s.status === '出席').length);
   public absentStudents = computed(() => this._students().filter(s => s.status !== '出席').length);
 
-  private http = inject(HttpClient);
-  // 您的後端 API 網址
-  private backendApiUrl = 'https://rocallsystem-backend.onrender.com'; 
-
-  // --- 建構子：啟動時自動載入資料 ---
   constructor() {
-    this.loadInitialData();
-  }
+    this.loadState();
+    
+    // This effect automatically saves the state to localStorage whenever it changes.
+    effect(() => {
+      const students = this._students();
+      this.saveState(students);
+    });
 
-  private async loadInitialData(): Promise<void> {
-    try {
-      // 呼叫後端 GET /api/students API
-      const studentsFromDb = await firstValueFrom(
-        this.http.get<Student[]>(`${this.backendApiUrl}/api/students`)
-      );
-      this._students.set(studentsFromDb);
-    } catch (error) {
-      console.error("載入初始資料失敗", error);
+    // This effect automatically resets the student list when the roll call period changes.
+    effect(() => {
+      this.isEvening(); // Establish dependency on the signal
+
+      if (this.isInitialEffectRun) {
+        this.isInitialEffectRun = false;
+        return;
+      }
+
+      console.log('Roll call period changed. Resetting all students to "Present".');
+      this.resetToInitialList();
+    });
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.updateCountdown();
+      this.countdownInterval = setInterval(() => this.updateCountdown(), 1000);
     }
   }
 
-  // --- 修正後的 Login 功能 ---
-  async login(studentId: string, name: string): Promise<Student> {
-
-    const payload = { 
-      studentId: studentId, 
-      studentName: name 
-    };
-
-    try {
-      // 真正呼叫後端 API (POST 請求)
-      const loggedInStudent = await firstValueFrom(
-        this.http.post<Student>(`${this.backendApiUrl}/api/login`, payload)
-      );
-
-      // 更新本地狀態
-      this._students.update(students => {
-        const existingStudent = students.find(s => s.id === loggedInStudent.id);
-        if (existingStudent) {
-          return students.map(s => s.id === loggedInStudent.id ? loggedInStudent : s);
-        } else {
-          return [...students, loggedInStudent];
+  /**
+   * Loads the student list from localStorage if available, otherwise initializes a new list.
+   */
+  private loadState(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedData) {
+          const parsedStudents: Student[] = JSON.parse(savedData);
+          const studentsWithDates = parsedStudents.map(s => ({
+            ...s,
+            lastUpdatedAt: new Date(s.lastUpdatedAt),
+          }));
+          this._students.set(studentsWithDates);
+          return;
         }
-      });
+      } catch (e) {
+        console.error('Failed to load or parse state from localStorage', e);
+      }
+    }
+    this.setInitialList();
+  }
 
-      return loggedInStudent;
-
-    } catch (error) {
-      console.error("Login failed", error);
-      throw error; 
+  /**
+   * Saves the current student list to localStorage.
+   */
+  private saveState(students: Student[]): void {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(students));
+      } catch (e) {
+        console.error('Failed to save state to localStorage', e);
+      }
     }
   }
 
-  // --- 修正後的 Apply for Leave 功能 ---
+  /**
+   * Sets the student list to the default state from the master roster.
+   * By default, all students are marked as '缺席'.
+   */
+  private setInitialList(): void {
+    const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
+      id: s.id,
+      name: s.name,
+      status: '缺席',
+      lastUpdatedAt: new Date(),
+    }));
+    this._students.set(initialStudents);
+  }
+  
+  private updateCountdown(): void {
+    const now = new Date();
+    
+    const morningCutoff = new Date(now);
+    morningCutoff.setHours(9, 30, 0, 0);
+
+    const eveningCutoff = new Date(now);
+    eveningCutoff.setHours(21, 30, 0, 0);
+
+    let isCurrentlyEvening: boolean;
+    let nextTransitionTime: Date;
+
+    // From 09:30 to 21:30 is now considered Evening Roll Call
+    if (now >= morningCutoff && now < eveningCutoff) {
+      isCurrentlyEvening = true; 
+      nextTransitionTime = eveningCutoff;
+    } else {
+      // Outside 09:30 to 21:30 is now considered Morning Roll Call
+      isCurrentlyEvening = false; 
+      if (now < morningCutoff) {
+        nextTransitionTime = morningCutoff;
+      } else {
+        nextTransitionTime = new Date(now);
+        nextTransitionTime.setDate(nextTransitionTime.getDate() + 1);
+        nextTransitionTime.setHours(9, 30, 0, 0);
+      }
+    }
+
+    this._isEvening.set(isCurrentlyEvening);
+
+    const timeDifference = nextTransitionTime.getTime() - now.getTime();
+    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
+    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
+    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
+
+    const formattedCountdown = 
+      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    this._countdown.set(formattedCountdown);
+  }
+
+  async login(studentId: string): Promise<Student> {
+    await fakeApiCall();
+
+    const studentFromRoster = MASTER_ROSTER.find(s => s.id === studentId);
+    
+    if (!studentFromRoster) {
+      throw new Error('errors.studentIdNotFound');
+    }
+
+    // Check if the student exists in the current list. If not, they might have been deleted.
+    const studentExistsInState = this._students().some(s => s.id === studentId);
+    if (!studentExistsInState) {
+        // Re-using this error message, as from the user's perspective, their ID is not valid for login at this moment.
+        throw new Error('errors.studentIdNotFound');
+    }
+
+    let loggedInStudent!: Student;
+    this._students.update(currentStudents =>
+      currentStudents.map(s => {
+        if (s.id === studentId) {
+          loggedInStudent = {
+            ...s,
+            status: '出席',
+            leaveType: undefined,
+            leaveRemarks: undefined,
+            lastUpdatedAt: new Date(),
+          };
+          return loggedInStudent;
+        }
+        return s;
+      })
+    );
+    
+    return loggedInStudent;
+  }
+
   async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
-
-    const payload = {
-      studentId: studentId,
-      leaveType: leaveType,
-      remarks: remarks
-    };
-
-    try {
-      await firstValueFrom(
-        this.http.post(`${this.backendApiUrl}/api/leave`, payload)
-      );
-
-      // 更新本地 UI 狀態
-      this._students.update(students => 
-        students.map(s => {
-          if (s.id === studentId) {
-            return { ...s, status: '請假', leaveType: leaveType, leaveRemarks: remarks, lastUpdatedAt: new Date() };
-          }
-          return s;
-        })
-      );
-    } catch (error) {
-       console.error("Apply for leave failed", error);
-       throw error;
-    }
+    await fakeApiCall();
+    this._students.update(students => 
+      students.map(s => {
+        if (s.id === studentId) {
+          return { ...s, status: '請假', leaveType: leaveType, leaveRemarks: remarks, lastUpdatedAt: new Date() };
+        }
+        return s;
+      })
+    );
   }
 
-  // (注意：以下功能仍然是 "假的" - 不會連線後端)
   async deleteStudent(studentId: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await fakeApiCall();
     this._students.update(students => students.filter(s => s.id !== studentId));
   }
-
+  
+  /**
+   * Resets all students from the master roster to '出席' status.
+   */
   async resetToInitialList(): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    this._students.update(currentStudents => 
-      currentStudents.map(student => ({
-        ...student,
-        status: '出席' as StudentStatus,
-        leaveType: undefined,
-        leaveRemarks: undefined,
-        lastUpdatedAt: new Date()
-      }))
-    );
+    await fakeApiCall(1000);
+    const resetStudents: Student[] = MASTER_ROSTER.map(s => ({
+      id: s.id,
+      name: s.name,
+      status: '出席',
+      leaveType: undefined,
+      leaveRemarks: undefined,
+      lastUpdatedAt: new Date(),
+    }));
+    this._students.set(resetStudents);
   }
 }

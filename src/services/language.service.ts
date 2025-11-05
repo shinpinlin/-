@@ -87,7 +87,8 @@ export class LanguageService {
         export: {
           noAbsentStudents: "目前沒有缺席或請假的學生。",
           eveningFileName: "晚點名_缺席名單",
-          morningFileName: "早點名_缺席名單"
+          morningFileName: "早點名_缺席名單",
+          csvHeader: "學號,姓名,狀態,假別,備註,請假時間"
         }
       },
       common: {
@@ -114,8 +115,7 @@ export class LanguageService {
       },
       errors: {
         studentIdNotFound: "學號不存在於名冊中",
-        nameMismatch: "學號與姓名不符",
-        emptyFields: "學號和姓名不能為空",
+        emptyFields: "學號不能為空",
         loginFailed: "登入失敗，請稍後再試。",
         leaveSubmitFailed: "提交請假申請失敗，請稍後再試。",
         passwordIncorrect: "密碼錯誤，請重試。",
@@ -196,7 +196,8 @@ export class LanguageService {
         export: {
           noAbsentStudents: "There are currently no absent or on-leave students.",
           eveningFileName: "EveningRollCall_AbsentList",
-          morningFileName: "MorningRollCall_AbsentList"
+          morningFileName: "MorningRollCall_AbsentList",
+          csvHeader: "ID,Name,Status,Leave Type,Remarks,Leave Time"
         }
       },
       common: {
@@ -223,8 +224,7 @@ export class LanguageService {
       },
       errors: {
         studentIdNotFound: "Student ID not found in roster.",
-        nameMismatch: "Student ID and name do not match.",
-        emptyFields: "Student ID and name cannot be empty.",
+        emptyFields: "Student ID cannot be empty.",
         loginFailed: "Login failed. Please try again later.",
         leaveSubmitFailed: "Failed to submit leave application. Please try again later.",
         passwordIncorrect: "Incorrect password. Please try again.",
@@ -305,7 +305,8 @@ export class LanguageService {
         export: {
           noAbsentStudents: "Hiện tại không có sinh viên nào vắng mặt hoặc nghỉ phép.",
           eveningFileName: "DiemDanhToi_VangMat",
-          morningFileName: "DiemDanhSang_VangMat"
+          morningFileName: "DiemDanhSang_VangMat",
+          csvHeader: "MSV,Tên,Trạng thái,Loại nghỉ phép,Ghi chú,Thời gian nghỉ phép"
         }
       },
       common: {
@@ -323,8 +324,7 @@ export class LanguageService {
       leaveTypes: { '病假': "Nghỉ ốm", '事假': "Nghỉ việc riêng", '論文假': "Nghỉ làm luận văn", '其他': "Khác" },
       errors: {
         studentIdNotFound: "Không tìm thấy mã số sinh viên trong danh sách.",
-        nameMismatch: "Mã số sinh viên và tên không khớp.",
-        emptyFields: "Mã số sinh viên và tên không được để trống.",
+        emptyFields: "Mã số sinh viên không được để trống.",
         loginFailed: "Đăng nhập thất bại. Vui lòng thử lại sau.",
         leaveSubmitFailed: "Gửi đơn xin nghỉ phép thất bại. Vui lòng thử lại sau.",
         passwordIncorrect: "Mật khẩu không đúng. Vui lòng thử lại.",
@@ -405,7 +405,8 @@ export class LanguageService {
         export: {
           noAbsentStudents: "ขณะนี้ไม่มีนักเรียนที่ขาดเรียนหรือลา",
           eveningFileName: "เช็คชื่อเย็น_รายชื่อขาด",
-          morningFileName: "เช็คชื่อเช้า_รายชื่อขาด"
+          morningFileName: "เช็คชื่อเช้า_รายชื่อขาด",
+          csvHeader: "รหัส,ชื่อ,สถานะ,ประเภทการลา,หมายเหตุ,เวลาที่ลา"
         }
       },
       common: {
@@ -423,8 +424,7 @@ export class LanguageService {
       leaveTypes: { '病假': "ลาป่วย", '事假': "ลากิจ", '論文假': "ลาทำวิทยานิพนธ์", '其他': "อื่นๆ" },
       errors: {
         studentIdNotFound: "ไม่พบรหัสนักเรียนในรายชื่อ",
-        nameMismatch: "รหัสนักเรียนและชื่อไม่ตรงกัน",
-        emptyFields: "รหัสนักเรียนและชื่อต้องไม่ว่างเปล่า",
+        emptyFields: "รหัสนักเรียนต้องไม่ว่างเปล่า",
         loginFailed: "ล็อกอินล้มเหลว โปรดลองอีกครั้งในภายหลัง",
         leaveSubmitFailed: "ส่งใบลาล้มเหลว โปรดลองอีกครั้งในภายหลัง",
         passwordIncorrect: "รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง",
@@ -505,7 +505,8 @@ export class LanguageService {
         export: {
           noAbsentStudents: "Saat ini tidak ada mahasiswa yang absen atau izin.",
           eveningFileName: "AbsensiMalam_DaftarAbsen",
-          morningFileName: "AbsensiPagi_DaftarAbsen"
+          morningFileName: "AbsensiPagi_DaftarAbsen",
+          csvHeader: "NIM,Nama,Status,Jenis Izin,Keterangan,Waktu Izin"
         }
       },
       common: {
@@ -523,8 +524,7 @@ export class LanguageService {
       leaveTypes: { '病假': "Izin Sakit", '事假': "Izin Pribadi", '論文假': "Izin Tesis", '其他': "Lainnya" },
       errors: {
         studentIdNotFound: "NIM tidak ditemukan dalam daftar.",
-        nameMismatch: "NIM dan nama tidak cocok.",
-        emptyFields: "NIM dan nama tidak boleh kosong.",
+        emptyFields: "NIM tidak boleh kosong.",
         loginFailed: "Login gagal. Silakan coba lagi nanti.",
         leaveSubmitFailed: "Gagal mengajukan izin. Silakan coba lagi nanti.",
         passwordIncorrect: "Kata sandi salah. Silakan coba lagi.",

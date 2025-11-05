@@ -4,13 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../services/student.service';
 import { Student, StudentStatus, LeaveType } from '../../models/student.model';
 import { LanguageService } from '../../services/language.service';
-import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-admin-view',
   templateUrl: './admin-view.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LanguageSwitcherComponent],
+  imports: [CommonModule, FormsModule, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminViewComponent {
@@ -102,31 +101,35 @@ export class AdminViewComponent {
       this.resetPasswordInput.set('');
     }
   }
-
+  
   exportAbsentList(): void {
     const absentStudents = this.studentService.students().filter(s => s.status !== '出席');
     if (absentStudents.length === 0) {
       alert(this.languageService.translate('admin.export.noAbsentStudents'));
       return;
     }
-
-    const header = '學號,姓名,狀態,假別,備註\n';
+    
+    const header = this.languageService.translate('admin.export.csvHeader') + '\n';
     const csvRows = absentStudents.map(s => {
       const remarks = s.leaveRemarks || '';
       // Escape quotes by doubling them, and wrap in quotes if it contains comma or quote
       const sanitizedRemarks = `"${remarks.replace(/"/g, '""')}"`;
-      const leaveType = s.leaveType || '';
-      return `${s.id},${s.name},${s.status},${leaveType},${sanitizedRemarks}`;
+      
+      const translatedStatus = this.languageService.translate(`statuses.${s.status}`);
+      const translatedLeaveType = s.leaveType ? this.languageService.translate(`leaveTypes.${s.leaveType}`) : '';
+      const leaveTime = s.status === '請假' ? s.lastUpdatedAt.toLocaleString(this.languageService.language()) : '';
+
+      return `${s.id},${s.name},${translatedStatus},${translatedLeaveType},${sanitizedRemarks},${leaveTime}`;
     });
 
     const csvContent = header + csvRows.join('\n');
     const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    // --- 修正點：移除對 isEvening 的依賴 ---
-    // 我們直接指定一個檔名，避免編譯錯誤
-    const filename = `${this.languageService.translate('admin.export.absentFileName')}_${new Date().toISOString().slice(0,10)}.csv`;
-
+    const rollCallType = this.studentService.isEvening() ? 
+        this.languageService.translate('admin.export.eveningFileName') : 
+        this.languageService.translate('admin.export.morningFileName');
+    const filename = `${rollCallType}_${new Date().toISOString().slice(0,10)}.csv`;
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
@@ -151,7 +154,7 @@ export class AdminViewComponent {
   async confirmDelete(): Promise<void> {
     const student = this.studentToDelete();
     if (!student) return;
-
+    
     if (this.deletePasswordInput() !== '119') {
       this.deletePasswordError.set(this.languageService.translate('errors.passwordIncorrect'));
       this.deletePasswordInput.set('');

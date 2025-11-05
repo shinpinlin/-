@@ -24,19 +24,6 @@
             class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100"
           >
         </div>
-        <div>
-          <label for="studentName" class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageService.translate('login.studentName') }}</label>
-          <input 
-            id="studentName" 
-            name="studentName" 
-            type="text" 
-            required 
-            [ngModel]="studentName()"
-            (ngModelChange)="studentName.set($event)"
-            [placeholder]="languageService.translate('login.studentNamePlaceholder')"
-            class="mt-1 block w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:text-gray-100"
-          >
-        </div>
 
         @if (errorMessage()) {
           <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">

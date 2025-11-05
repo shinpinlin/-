@@ -18,7 +18,6 @@ export class LoginComponent {
   adminLoginSuccess = output<void>();
 
   studentId = signal('');
-  studentName = signal('');
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   
@@ -28,16 +27,15 @@ export class LoginComponent {
   async handleStudentLogin() {
     this.errorMessage.set(null);
     const id = this.studentId().trim();
-    const name = this.studentName().trim();
 
-    if (!id || !name) {
+    if (!id) {
         this.errorMessage.set(this.languageService.translate('errors.emptyFields'));
         return;
     }
     
     this.isLoading.set(true);
     try {
-      const student = await this.studentService.login(id, name);
+      const student = await this.studentService.login(id);
       this.studentLoginSuccess.emit(student);
     } catch (error) {
       console.error("Login failed", error);
