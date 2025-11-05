@@ -21,8 +21,6 @@ export class LanguageService {
         studentLogin: "學生登入",
         studentId: "學號",
         studentIdPlaceholder: "請輸入您的學號",
-        studentName: "姓名",
-        studentNamePlaceholder: "請輸入您的姓名",
         loginButton: "登入",
         loggingIn: "登入中...",
         testAccountsHint: "測試帳號提示",
@@ -32,7 +30,7 @@ export class LanguageService {
         adminButton: "進入管理系統",
       },
       student: {
-        welcome: "歡迎, {{name}}",
+        welcome: "學生: {{name}}",
         status: {
           present: "您目前的狀態為：出席",
           onLeave: "您已請假 (假別：{{leaveType}})",
@@ -115,6 +113,7 @@ export class LanguageService {
       },
       errors: {
         studentIdNotFound: "學號不存在於名冊中",
+        studentInfoIncorrect: "學號或姓名不正確，請確認後再試。",
         emptyFields: "學號不能為空",
         loginFailed: "登入失敗，請稍後再試。",
         leaveSubmitFailed: "提交請假申請失敗，請稍後再試。",
@@ -130,8 +129,6 @@ export class LanguageService {
         studentLogin: "Student Login",
         studentId: "Student ID",
         studentIdPlaceholder: "Enter your student ID",
-        studentName: "Name",
-        studentNamePlaceholder: "Enter your name",
         loginButton: "Login",
         loggingIn: "Logging in...",
         testAccountsHint: "Test Account Hint",
@@ -141,7 +138,7 @@ export class LanguageService {
         adminButton: "Enter Admin System",
       },
       student: {
-        welcome: "Welcome, {{name}}",
+        welcome: "Student: {{name}}",
         status: {
           present: "Your current status is: Present",
           onLeave: "You are on leave (Type: {{leaveType}})",
@@ -224,6 +221,7 @@ export class LanguageService {
       },
       errors: {
         studentIdNotFound: "Student ID not found in roster.",
+        studentInfoIncorrect: "Student ID or name is incorrect. Please check and try again.",
         emptyFields: "Student ID cannot be empty.",
         loginFailed: "Login failed. Please try again later.",
         leaveSubmitFailed: "Failed to submit leave application. Please try again later.",
@@ -239,8 +237,6 @@ export class LanguageService {
         studentLogin: "Đăng nhập Sinh viên",
         studentId: "Mã số sinh viên",
         studentIdPlaceholder: "Nhập mã số sinh viên của bạn",
-        studentName: "Tên",
-        studentNamePlaceholder: "Nhập tên của bạn",
         loginButton: "Đăng nhập",
         loggingIn: "Đang đăng nhập...",
         testAccountsHint: "Gợi ý Tài khoản Kiểm tra",
@@ -250,7 +246,7 @@ export class LanguageService {
         adminButton: "Vào Hệ thống Quản trị",
       },
       student: {
-        welcome: "Chào mừng, {{name}}",
+        welcome: "Sinh viên: {{name}}",
         status: {
           present: "Trạng thái hiện tại của bạn là: Có mặt",
           onLeave: "Bạn đang nghỉ phép (Loại: {{leaveType}})",
@@ -324,6 +320,7 @@ export class LanguageService {
       leaveTypes: { '病假': "Nghỉ ốm", '事假': "Nghỉ việc riêng", '論文假': "Nghỉ làm luận văn", '其他': "Khác" },
       errors: {
         studentIdNotFound: "Không tìm thấy mã số sinh viên trong danh sách.",
+        studentInfoIncorrect: "Mã số sinh viên hoặc tên không đúng. Vui lòng kiểm tra và thử lại.",
         emptyFields: "Mã số sinh viên không được để trống.",
         loginFailed: "Đăng nhập thất bại. Vui lòng thử lại sau.",
         leaveSubmitFailed: "Gửi đơn xin nghỉ phép thất bại. Vui lòng thử lại sau.",
@@ -339,8 +336,6 @@ export class LanguageService {
         studentLogin: "ล็อกอินสำหรับนักเรียน",
         studentId: "รหัสนักเรียน",
         studentIdPlaceholder: "ป้อนรหัสนักเรียนของคุณ",
-        studentName: "ชื่อ",
-        studentNamePlaceholder: "ป้อนชื่อของคุณ",
         loginButton: "ล็อกอิน",
         loggingIn: "กำลังล็อกอิน...",
         testAccountsHint: "คำใบ้บัญชีทดสอบ",
@@ -350,7 +345,7 @@ export class LanguageService {
         adminButton: "เข้าสู่ระบบผู้ดูแล",
       },
       student: {
-        welcome: "ยินดีต้อนรับ, {{name}}",
+        welcome: "นักเรียน: {{name}}",
         status: {
           present: "สถานะปัจจุบันของคุณคือ: มาเรียน",
           onLeave: "คุณกำลังลา (ประเภท: {{leaveType}})",
@@ -424,7 +419,8 @@ export class LanguageService {
       leaveTypes: { '病假': "ลาป่วย", '事假': "ลากิจ", '論文假': "ลาทำวิทยานิพนธ์", '其他': "อื่นๆ" },
       errors: {
         studentIdNotFound: "ไม่พบรหัสนักเรียนในรายชื่อ",
-        emptyFields: "รหัสนักเรียนต้องไม่ว่างเปล่า",
+        studentInfoIncorrect: "รหัสนักเรียนหรือชื่อไม่ถูกต้อง โปรดตรวจสอบและลองอีกครั้ง",
+        emptyFields: "ต้องกรอกรหัสนักเรียน",
         loginFailed: "ล็อกอินล้มเหลว โปรดลองอีกครั้งในภายหลัง",
         leaveSubmitFailed: "ส่งใบลาล้มเหลว โปรดลองอีกครั้งในภายหลัง",
         passwordIncorrect: "รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง",
@@ -439,8 +435,6 @@ export class LanguageService {
         studentLogin: "Login Mahasiswa",
         studentId: "Nomor Induk Mahasiswa",
         studentIdPlaceholder: "Masukkan NIM Anda",
-        studentName: "Nama",
-        studentNamePlaceholder: "Masukkan nama Anda",
         loginButton: "Login",
         loggingIn: "Sedang masuk...",
         testAccountsHint: "Petunjuk Akun Uji Coba",
@@ -450,7 +444,7 @@ export class LanguageService {
         adminButton: "Masuk Sistem Admin",
       },
       student: {
-        welcome: "Selamat datang, {{name}}",
+        welcome: "Mahasiswa: {{name}}",
         status: {
           present: "Status Anda saat ini: Hadir",
           onLeave: "Anda sedang cuti (Jenis: {{leaveType}})",
@@ -524,7 +518,8 @@ export class LanguageService {
       leaveTypes: { '病假': "Izin Sakit", '事假': "Izin Pribadi", '論文假': "Izin Tesis", '其他': "Lainnya" },
       errors: {
         studentIdNotFound: "NIM tidak ditemukan dalam daftar.",
-        emptyFields: "NIM tidak boleh kosong.",
+        studentInfoIncorrect: "NIM atau nama salah. Silakan periksa dan coba lagi.",
+        emptyFields: "Nomor Induk Mahasiswa tidak boleh kosong.",
         loginFailed: "Login gagal. Silakan coba lagi nanti.",
         leaveSubmitFailed: "Gagal mengajukan izin. Silakan coba lagi nanti.",
         passwordIncorrect: "Kata sandi salah. Silakan coba lagi.",

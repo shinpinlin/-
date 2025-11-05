@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, output, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, output, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Student } from '../../models/student.model';
 import { StudentService } from '../../services/student.service';
@@ -18,27 +18,38 @@ export class LoginComponent {
   adminLoginSuccess = output<void>();
 
   studentId = signal('');
-  // 移除 studentName signal
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   
   private studentService = inject(StudentService);
   public languageService = inject(LanguageService);
 
+  foundStudentName = computed(() => {
+    const id = this.studentId().trim();
+    if (!id) {
+        return null;
+    }
+    const student = this.studentService.masterRoster.find(s => s.id === id);
+    return student ? student.name : null;
+  });
+
   async handleStudentLogin() {
     this.errorMessage.set(null);
     const id = this.studentId().trim();
-    // 移除取得 name 的邏輯
 
-    if (!id) { // 修正：只檢查學號是否為空
+    if (!id) {
         this.errorMessage.set(this.languageService.translate('errors.emptyFields'));
         return;
     }
     
+    if (!this.foundStudentName()) {
+        this.errorMessage.set(this.languageService.translate('errors.studentIdNotFound'));
+        return;
+    }
+
     this.isLoading.set(true);
     try {
-      // 修正：只傳遞學號 (ID) 即可，不再傳遞 name
-      const student = await this.studentService.login(id); 
+      const student = await this.studentService.login(id);
       this.studentLoginSuccess.emit(student);
     } catch (error) {
       console.error("Login failed", error);
