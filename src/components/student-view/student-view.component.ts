@@ -4,13 +4,13 @@ import { CommonModule } from '@angular/common';
 import { Student, LeaveType } from '../../models/student.model';
 import { StudentService } from '../../services/student.service';
 import { LanguageService } from '../../services/language.service';
-import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+// 移除 LanguageSwitcherComponent 匯入
 
 @Component({
   selector: 'app-student-view',
   templateUrl: './student-view.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, LanguageSwitcherComponent],
+  imports: [CommonModule, FormsModule], // 👈 修正：從 imports 陣列中移除 LanguageSwitcherComponent
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentViewComponent {
