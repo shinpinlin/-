@@ -51,15 +51,15 @@
        <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <h2 class="text-xl font-semibold">{{ languageService.translate('admin.managementActions') }}</h2>
-            @if (studentService.isEvening()) {
-              <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                {{ languageService.translate('admin.eveningRollCall', { countdown: studentService.countdown() }) }}
-              </span>
-            } @else {
-              <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                {{ languageService.translate('admin.morningRollCall', { countdown: studentService.countdown() }) }}
-              </span>
-            }
+           @if (studentService.isEvening()) {
+  <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+    {{ languageService.translate('admin.eveningRollCall', { countdown: studentService.countdown() }) }}
+  </span>
+} @else {
+  <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+    {{ languageService.translate('admin.morningRollCall', { countdown: studentService.countdown() }) }}
+  </span>
+}
           </div>
           <div class="flex items-center space-x-3 flex-wrap gap-2">
               <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">{{ languageService.translate('admin.resetStatus') }}</button>
