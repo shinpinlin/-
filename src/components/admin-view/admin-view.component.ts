@@ -10,7 +10,7 @@ import { LanguageSwitcherComponent } from '../language-switcher/language-switche
   selector: 'app-admin-view',
   templateUrl: './admin-view.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, LanguageSwitcherComponent],
+  [CommonModule, FormsModule], //,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminViewComponent {

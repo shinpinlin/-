@@ -37,7 +37,7 @@ export class LoginComponent {
     
     this.isLoading.set(true);
     try {
-      // 修正：只傳遞學號 (ID)。假設服務器或 service 會根據學號查找姓名。
+      // 修正：只傳遞學號 (ID) 即可，不再傳遞 name
       const student = await this.studentService.login(id); 
       this.studentLoginSuccess.emit(student);
     } catch (error) {

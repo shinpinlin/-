@@ -41,7 +41,7 @@ export class StudentService {
   }
 
   // --- Login 功能 ---
-  async login(studentId: string, name: string): Promise<Student> {
+  async login(studentId: string): Promise<Student> {
 
     const payload = { 
       studentId: studentId, 
