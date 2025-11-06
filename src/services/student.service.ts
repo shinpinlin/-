@@ -1,15 +1,10 @@
 import { Injectable, signal, computed, effect, PLATFORM_ID, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http'; // 👈 新增：引入 HttpClient
+import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Student, StudentStatus, LeaveType } from '../models/student.model';
-import { firstValueFrom } from 'rxjs'; // 👈 新增：用於將 Observable 轉換為 Promise
+import { firstValueFrom } from 'rxjs';
 
-// Helper to simulate network latency (保留但未使用)
-const fakeApiCall = (delay: number = 500): Promise<void> => {
-  return new Promise(resolve => setTimeout(resolve, delay));
-};
-
-// A pre-defined master list of all students in the class. (保留原始資料)
+// A pre-defined master list of all students in the class. (已修正語法)
 const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1123003', name: '謝昀臻' },
   { id: '1123025', name: '陳靖' },
@@ -37,7 +32,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1133105', name: '雷漢森' },
   { id: '1133106', name: '哈志豪' },
   { id: '1133107', name: '逾明' },
-  { id: '1133108', name: '高以理' }, 
+  { id: '1133108', name: '高以理' },
   { id: '1133001', name: '陳儒頡' },
   { id: '1133002', name: '邱浴鈞' },
   { id: '1133003', name: '張羨茿' },
@@ -119,23 +114,19 @@ const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
   providedIn: 'root',
 })
 export class StudentService {
-  // 👈 定義後端 API 網址，假設所有 API 端點都在 /api/v1/ 下
   private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com/api/v1';
 
   private _students = signal<Student[]>([]);
   private platformId = inject(PLATFORM_ID);
-  private http = inject(HttpClient); // 注入 HttpClient 服務
+  private http = inject(HttpClient); 
 
-  // Time-related signals for roll call period
   private readonly _isEvening = signal(false);
   private readonly _countdown = signal('');
   private isInitialEffectRun = true;
-  private countdownInterval?: number; // 修正 TS2322 錯誤
+  private countdownInterval?: number; 
 
-  // Expose master roster for hints/testing (保留)
   public readonly masterRoster = MASTER_ROSTER;
 
-  // Public readonly signals for consumption by components
   public students = this._students.asReadonly();
   public isEvening = this._isEvening.asReadonly();
   public countdown = this._countdown.asReadonly();
@@ -147,49 +138,40 @@ export class StudentService {
   constructor() {
     this.loadState();
     
-    // This effect automatically saves the state to localStorage whenever it changes. (保留)
     effect(() => {
       const students = this._students();
       this.saveState(students);
     });
 
-    // This effect automatically resets the student list when the roll call period changes.
     effect(() => {
-      this.isEvening(); // Establish dependency on the signal
+      this.isEvening(); 
 
       if (this.isInitialEffectRun) {
         this.isInitialEffectRun = false;
-        // 載入狀態後，首次運行時應從後端獲取最新狀態
         this.fetchStudents(); 
         return;
       }
 
       console.log('Roll call period changed. Resetting all students to "Present".');
-      // 由於狀態現在由後端管理，這裡只呼叫後端重置 API
+      // 👈 修正錯誤 5：這裡呼叫 public 的 resetToInitialList
       this.resetToInitialList(); 
     });
 
     if (isPlatformBrowser(this.platformId)) {
       this.updateCountdown();
-      // 👈 關鍵修正：保留 setInterval 呼叫，並使用 as unknown as number 修正 TS2322 錯誤
       this.countdownInterval = setInterval(() => this.updateCountdown(), 1000) as unknown as number;
     }
   }
 
   // ***************************************************************
-  // 狀態管理（保留本地邏輯）
+  // 狀態管理
   // ***************************************************************
 
-  /**
-   * 從後端獲取當前學生狀態，並更新本地 Signal
-   */
   public async fetchStudents(): Promise<void> {
     try {
-      // 假設後端有一個 /api/v1/students 端點回傳當前所有學生的狀態
       const studentsData = await firstValueFrom(
         this.http.get<Student[]>(`${this.API_BASE_URL}/students`)
       );
-      // 確保將 lastUpdatedAt 轉換為 Date 物件
       const studentsWithDates = studentsData.map(s => ({
         ...s,
         lastUpdatedAt: new Date(s.lastUpdatedAt),
@@ -197,13 +179,9 @@ export class StudentService {
       this._students.set(studentsWithDates);
     } catch (e) {
       console.error('Failed to fetch student status from backend', e);
-      // 如果獲取失敗，可以使用本地狀態作為 fallback
     }
   }
 
-  /**
-   * Loads the student list from localStorage if available, otherwise initializes a new list. (保留)
-   */
   private loadState(): void {
     if (isPlatformBrowser(this.platformId)) {
       try {
@@ -224,9 +202,6 @@ export class StudentService {
     this.setInitialList();
   }
 
-  /**
-   * Saves the current student list to localStorage. (保留)
-   */
   private saveState(students: Student[]): void {
     if (isPlatformBrowser(this.platformId)) {
       try {
@@ -238,8 +213,9 @@ export class StudentService {
   }
 
   /**
-   * Sets the student list to the default state from the master roster. (保留)
-   * By default, all students are marked as '缺席'.
+   * 👈 修正錯誤 5：setInitialList 是 private 的，
+   * resetToInitialList 才是 public 的。
+   * 這是 TS 建議的函式，但我們保留它
    */
   private setInitialList(): void {
     const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
@@ -263,12 +239,10 @@ export class StudentService {
     let isCurrentlyEvening: boolean;
     let nextTransitionTime: Date;
 
-    // From 09:30 to 21:30 is now considered Evening Roll Call
     if (now >= morningCutoff && now < eveningCutoff) {
       isCurrentlyEvening = true; 
       nextTransitionTime = eveningCutoff;
     } else {
-      // Outside 09:30 to 21:30 is now considered Morning Roll Call
       isCurrentlyEvening = false; 
       if (now < morningCutoff) {
         nextTransitionTime = morningCutoff;
@@ -282,4 +256,56 @@ export class StudentService {
     this._isEvening.set(isCurrentlyEvening);
 
     const timeDifference = nextTransitionTime.getTime() - now.getTime();
-    const hours = Math.max(0, Math.floor
+
+    // 👈 修正錯誤 6 & 7：補完 Math.floor 的語法
+    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
+    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
+    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
+
+    const formattedCountdown = 
+      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    this._countdown.set(formattedCountdown);
+  }
+
+  // ***************************************************************
+  // 核心操作 (👈 修正錯誤 1-4：補上遺失的 public 函式)
+  // ***************************************************************
+
+  /**
+   * 學生登入並標記為「出席」
+   */
+  public async login(studentId: string): Promise<Student> {
+    const loggedInStudent = await firstValueFrom(
+      this.http.post<Student>(`${this.API_BASE_URL}/login`, { studentId })
+    );
+    this.fetchStudents(); 
+    return loggedInStudent;
+  }
+
+  /**
+   * 學生申請請假
+   */
+  public async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
+    const body = { studentId, leaveType, remarks };
+    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/leave`, body));
+    this.fetchStudents(); 
+  }
+
+  /**
+   * 管理員刪除學生
+   */
+  public async deleteStudent(studentId: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.API_BASE_URL}/students/${studentId}`));
+    this.fetchStudents(); 
+  }
+  
+  /**
+   * 管理員重置所有學生的狀態
+   */
+  public async resetToInitialList(adminPassword?: string): Promise<void> {
+    const body = { password: adminPassword }; 
+    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/admin/reset`, body));
+    this.fetchStudents(); 
+  }
+}
