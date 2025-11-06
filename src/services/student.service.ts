@@ -37,7 +37,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1133105', name: '雷漢森' },
   { id: '1133106', name: '哈志豪' },
   { id: '1133107', name: '逾明' },
-  { id: '1133108'  name} '高以理' },
+  { id: '1133108', name: '高以理' }, 
   { id: '1133001', name: '陳儒頡' },
   { id: '1133002', name: '邱浴鈞' },
   { id: '1133003', name: '張羨茿' },
@@ -282,64 +282,4 @@ export class StudentService {
     this._isEvening.set(isCurrentlyEvening);
 
     const timeDifference = nextTransitionTime.getTime() - now.getTime();
-    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
-    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
-    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
-
-    const formattedCountdown = 
-      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    
-    this._countdown.set(formattedCountdown);
-  }
-
-  // ***************************************************************
-  // 核心操作 (替換為 API 呼叫)
-  // ***************************************************************
-
-  /**
-   * 學生登入並標記為「出席」
-   */
-  async login(studentId: string): Promise<Student> {
-    // 👈 替換為 API 呼叫
-    const loggedInStudent = await firstValueFrom(
-      this.http.post<Student>(`${this.API_BASE_URL}/login`, { studentId })
-    );
-    // 成功後，更新本地狀態並返回學生資訊
-    this.fetchStudents(); 
-    return loggedInStudent;
-  }
-
-  /**
-   * 學生申請請假
-   */
-  async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
-    const body = { studentId, leaveType, remarks };
-    // 👈 替換為 API 呼叫
-    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/leave`, body));
-    // 成功後，更新本地狀態
-    this.fetchStudents(); 
-  }
-
-  /**
-   * 管理員刪除學生
-   */
-  async deleteStudent(studentId: string): Promise<void> {
-    // 👈 替換為 API 呼叫
-    await firstValueFrom(this.http.delete<void>(`${this.API_BASE_URL}/students/${studentId}`));
-    // 成功後，更新本地狀態
-    this.fetchStudents(); 
-  }
-  
-  /**
-   * 管理員重置所有學生的狀態
-   */
-  async resetToInitialList(adminPassword?: string): Promise<void> {
-    const body = { password: adminPassword }; // 傳遞密碼給後端驗證，如果需要
-    // 👈 替換為 API 呼叫
-    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/admin/reset`, body));
-    // GPL-3.0
-    // Succeeded
-    // 成功後，更新本地狀態
-    this.fetchStudents(); 
-  }
-}
+    const hours = Math.max(0, Math.floor

@@ -4,13 +4,12 @@ import { CommonModule } from '@angular/common';
 import { Student, LeaveType } from '../../models/student.model';
 import { StudentService } from '../../services/student.service';
 import { LanguageService } from '../../services/language.service';
-// 關鍵修正：移除 LanguageSwitcherComponent 匯入
 
 @Component({
   selector: 'app-student-view',
   templateUrl: './student-view.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule], // 👈 關鍵修正：從 imports 陣列中移除 LanguageSwitcherComponent
+  imports: [CommonModule, FormsModule], // 根據您的註解，已移除 LanguageSwitcherComponent
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentViewComponent {
@@ -65,7 +64,7 @@ export class StudentViewComponent {
     if (!user) return;
     
     if (this.leaveType() === '其他' && !this.remarks().trim()) {
-      // 關鍵修正：移除 alert()
+      // 根據您的註解，已移除 alert()
       console.warn(this.languageService.translate('student.remarks') + ` (` + this.languageService.translate('student.remarksRequired') + `)`);
       return;
     }
@@ -77,7 +76,7 @@ export class StudentViewComponent {
         this.showLeaveForm.set(false);
     } catch (error) {
         console.error('Failed to submit leave application', error);
-        // 關鍵修正：移除 alert()
+        // 根據您的註解，已移除 alert()
         console.error(this.languageService.translate('errors.leaveSubmitFailed'));
     } finally {
         this.isSubmitting.set(false);
