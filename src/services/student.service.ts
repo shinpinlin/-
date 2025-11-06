@@ -11,7 +11,7 @@ const fakeApiCall = (delay: number = 500): Promise<void> => {
 
 // A pre-defined master list of all students in the class. (保留原始資料)
 const MASTER_ROSTER: { id: string, name: string }[] = [
-  { id: '1123003', name: '謝時臻' },
+  { id: '1123003', name: '謝昀臻' },
   { id: '1123025', name: '陳靖' },
   { id: '1123047', name: '吳昀軒' },
   { id: '1123065', name: '吳玟璇' },
@@ -36,8 +36,8 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1133104', name: '毛仁笛' },
   { id: '1133105', name: '雷漢森' },
   { id: '1133106', name: '哈志豪' },
-  { id: '1133107', name: '凃明' },
-  { id: '1S-CHINA' },
+  { id: '1133107', name: '逾明' },
+  { id: '1133108'  name} '高以理' },
   { id: '1133001', name: '陳儒頡' },
   { id: '1133002', name: '邱浴鈞' },
   { id: '1133003', name: '張羨茿' },
