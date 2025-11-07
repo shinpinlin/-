@@ -7,7 +7,7 @@ import { StudentViewComponent } from './components/student-view/student-view.com
 import { AdminViewComponent } from './components/admin-view/admin-view.component';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-root',//
   standalone: true,
   imports: [
     CommonModule,
