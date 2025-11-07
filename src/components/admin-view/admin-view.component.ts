@@ -1,224 +1,257 @@
-import { Component, ChangeDetectionStrategy, inject, output, signal, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { StudentService } from '../../services/student.service';
-import { Student, StudentStatus, LeaveType } from '../../models/student.model';
-import { LanguageService } from '../../services/language.service';
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  <header class="bg-white dark:bg-gray-800 shadow-md">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">{{ languageService.translate('admin.dashboardTitle') }}</h1>
+      <div class="flex items-center">
+        <button (click)="logout.emit()" class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+          <span>{{ languageService.translate('common.logout') }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
 
-@Component({
-  selector: 'app-admin-view',
-  templateUrl: './admin-view.component.html',
-  standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class AdminViewComponent {
-  studentService = inject(StudentService);
-  public languageService = inject(LanguageService);
-  logout = output<void>();
+  <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4">
+        <div class="bg-blue-500 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.totalStudents') }}</p>
+          <p class="text-3xl font-bold">{{ studentService.totalStudents() }}</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4">
+        <div class="bg-green-500 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.presentStudents') }}</p>
+          <p class="text-3xl font-bold">{{ studentService.presentStudents() }}</p>
+        </div>
+      </div>
+      <div (click)="toggleAbsentFilter()" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 cursor-pointer hover:shadow-xl transition-shadow duration-300">
+        <div class="bg-red-500 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.absentStudents') }}</p>
+          <p class="text-3xl font-bold">{{ studentService.absentStudents() }}</p>
+        </div>
+      </div>
+    </div>
 
-  private filter = signal<'all' | 'absent'>('all');
-  searchQuery = signal('');
-  leaveTypeFilter = signal<'all' | LeaveType>('all');
+        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+       <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <h2 class="text-xl font-semibold">{{ languageService.translate('admin.managementActions') }}</h2>
+            @if (studentService.isEvening()) {
+              <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                {{ languageService.translate('admin.eveningRollCall', { countdown: studentService.countdown() }) }}
+              </span>
+            } @else {
+              <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                {{ languageService.translate('admin.morningRollCall', { countdown: studentService.countdown() }) }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center space-x-3 flex-wrap gap-2">
+              <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">{{ languageService.translate('admin.resetStatus') }}</button>
+              <button (click)="exportAbsentList()" class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">{{ languageService.translate('admin.exportAbsentList') }}</button>
+          </div>
+       </div>
+    </div>
+    
+        <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+        <div>
+          <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageService.translate('admin.searchStudent') }}</label>
+          <input 
+            type="text" 
+            id="search"
+            [placeholder]="languageService.translate('admin.searchPlaceholder')"
+            [ngModel]="searchQuery()" 
+            (ngModelChange)="searchQuery.set($event)"
+            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          >
+        </div>
+        <div>
+          <label for="leave-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageService.translate('admin.filterLeaveType') }}</label>
+          <select 
+            id="leave-filter"
+            [ngModel]="leaveTypeFilter()" 
+            (ngModelChange)="leaveTypeFilter.set($event)"
+            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            <option value="all">{{ languageService.translate('admin.allLeaveTypes') }}</option>
+            @for(type of leaveTypes; track type) {
+              <option [value]="type">{{ languageService.translate('leaveTypes.' + type) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
 
-  // Signals for the password modal
-  showResetPasswordModal = signal(false);
-  resetPasswordInput = signal('');
-  passwordError = signal<string | null>(null);
-  isResetting = signal(false);
 
-  // Signals for delete confirmation modal
-  showDeleteConfirmModal = signal(false);
-  studentToDelete = signal<Student | null>(null);
-  isDeleting = signal(false);
-  deletePasswordInput = signal('');
-  deletePasswordError = signal<string | null>(null);
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.studentId') }}</th>
+              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.name') }}</th>
+              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.status') }}</th>
+              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.leaveType') }}</th>
+              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.remarks') }}</th>
+              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.lastUpdated') }}</th>
+              <th scope="col" class="px-6 py-3 text-center">{{ languageService.translate('admin.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of filteredStudents(); track student.id) {
+              <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ student.id }}</td>
+                <td class="px-6 py-4">{{ student.name }}</td>
+                <td class="px-6 py-4">
+                  <span class="px-2 py-1 font-semibold leading-tight rounded-full text-xs" [class]="getStatusClass(student.status)">
+                                        {{ languageService.translate('statuses.' + student.status.trim()) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">{{ student.leaveType ? languageService.translate('leaveTypes.' + student.leaveType) : '無' }}</td>
+                <td class="px-6 py-4">{{ student.leaveRemarks || '無' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ student.lastUpdatedAt | date:'MM/dd HH:mm:ss' }}</td>
+                <td class="px-6 py-4 text-center">
+                  <button (click)="openDeleteConfirm(student)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                    {{ languageService.translate('admin.delete') }}
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+                <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                  {{ languageService.translate('admin.noMatchingStudents') }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  
+    @if (showResetPasswordModal()) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelReset()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+        <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.resetModal.title') }}</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ languageService.translate('admin.resetModal.description') }}</p>
+        
+        <form (ngSubmit)="confirmReset()">
+          <div>
+            <label for="resetPassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
+            <input 
+              id="resetPassword"
+              type="password"
+              [ngModel]="resetPasswordInput()"
+              (ngModelChange)="resetPasswordInput.set($event); passwordError.set(null)"
+              name="resetPassword"
+              [placeholder]="languageService.translate('admin.resetModal.passwordPlaceholder')"
+              autocomplete="current-password"
+              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
+            >
+          </div>
+          
+          @if (passwordError()) {
+            <p class="text-red-500 text-sm mt-2">{{ passwordError() }}</p>
+          }
 
-  readonly leaveTypes: LeaveType[] = ['病假', '事假', '論文假', '其他'];
+          <div class="mt-6 flex justify-end space-x-3">
+            <button 
+              type="button" 
+              (click)="cancelReset()" 
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+            >
+              {{ languageService.translate('common.cancel') }}
+            </button>
+            <button 
+              type="submit"
+              [disabled]="isResetting()"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
+            >
+              @if(isResetting()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ languageService.translate('common.resetting') }}</span>
+              } @else {
+                <span>{{ languageService.translate('common.confirmReset') }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
 
-  filteredStudents = computed(() => {
-    const students = this.studentService.students();
-    const currentFilter = this.filter();
-    const query = this.searchQuery().toLowerCase().trim();
-    const leaveFilter = this.leaveTypeFilter();
-
-    let filtered = students;
-
-    // 1. Filter by absent status (toggled by clicking the card)
-    if (currentFilter === 'absent') {
-      filtered = filtered.filter(s => s.status !== '出席');
-    }
-
-    // 2. Filter by search query on ID or name
-    if (query) {
-      filtered = filtered.filter(s => 
-        s.id.toLowerCase().includes(query) || 
-        s.name.toLowerCase().includes(query)
-      );
-    }
-
-    // 3. Filter by leave type
-    if (leaveFilter !== 'all') {
-      filtered = filtered.filter(s => s.status === '請假' && s.leaveType === leaveFilter);
-    }
-
-    return filtered;
-  });
-
-  toggleAbsentFilter(): void {
-    this.filter.update(current => (current === 'all' ? 'absent' : 'all'));
-  }
-
-  // Opens the password modal
-  openResetModal(): void {
-    this.resetPasswordInput.set('');
-    this.passwordError.set(null);
-    this.showResetPasswordModal.set(true);
-  }
-
-  // Closes the password modal
-  cancelReset(): void {
-    this.showResetPasswordModal.set(false);
-  }
-
-  
-  async confirmReset(): Promise<void> {
-    // 1. 您的密碼檢查 (119)
-    if (this.resetPasswordInput() !== '119') {
-      this.passwordError.set(this.languageService.translate('errors.passwordIncorrect'));
-      this.resetPasswordInput.set('');
-      return; // 密碼錯誤，結束
-    }
-    
-    // 2. 密碼正確，開始呼叫
-    this.passwordError.set(null);
-    this.isResetting.set(true);
-    
-    // 3. 您的後端 API 網址 (指向我們在 app.py 建立的新 API)
-    const apiUrl = 'https://rocallsystem-backend.onrender.com/api/v1/reset-attendance';
-
-    try {
-      // 4. 執行「正確的」 fetch 網路請求
-      const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          // 將 "119" 作為密碼傳送
-          body: JSON.stringify({ adminPassword: this.resetPasswordInput() }) 
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // 如果後端回傳錯誤 (例如密碼錯誤，雖然我們前端已檢查，但後端會再驗證)
-        throw new Error(data.message || '後端伺服器錯誤');
-      }
-      
-      // 5. 成功！
-      this.showResetPasswordModal.set(false);
-      alert(data.message); // 顯示 "成功：已將所有人員狀態重置為「出席」。"
-
-      // 6. 🚀 🚀 🚀 最終修正 🚀 🚀 🚀
-      // 我們將錯誤的 loadStudents() 換成 location.reload()
-      // 這將會「重新整理網頁」，強制載入新資料
-      location.reload(); 
-
-    } catch (error) {
-      console.error('Failed to reset student list', error);
-      // 在 modal 中顯示錯誤
-      this.passwordError.set((error as Error).message || this.languageService.translate('errors.resetFailed'));
-    } finally {
-      // 結束 loading
-      this.isResetting.set(false);
-    }
-  }
-  
-  exportAbsentList(): void {
-    const absentStudents = this.studentService.students().filter(s => s.status !== '出席');
-    if (absentStudents.length === 0) {
-      alert(this.languageService.translate('admin.export.noAbsentStudents'));
-      return;
-    }
-    
-    const header = this.languageService.translate('admin.export.csvHeader') + '\n';
-    
-    // 🚀 🚀 🚀 修正：還原您被截斷的程式碼 🚀 🚀 🚀
-    const csvRows = absentStudents.map(s => {
-      const remarks = s.leaveRemarks || '';
-      // Escape quotes by doubling them, and wrap in quotes if it contains comma or quote
-      const sanitizedRemarks = `"${remarks.replace(/"/g, '""')}"`;
-      
-      const translatedStatus = this.languageService.translate(`statuses.${s.status}`);
-      const translatedLeaveType = s.leaveType ? this.languageService.translate(`leaveTypes.${s.leaveType}`) : '';
-      const leaveTime = s.status === '請假' ? s.lastUpdatedAt.toLocaleString(this.languageService.language()) : '';
-
-      return `${s.id},${s.name},${translatedStatus},${translatedLeaveType},${sanitizedRemarks},${leaveTime}`;
-    });
-    // 🚀 🚀 🚀 修正結束 🚀 🚀 🚀
-
-    const csvContent = header + csvRows.join('\n');
-    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    const rollCallType = this.studentService.isEvening() ? 
-        this.languageService.translate('admin.export.eveningFileName') : 
-        this.languageService.translate('admin.export.morningFileName');
-    const filename = `${rollCallType}_${new Date().toISOString().slice(0,10)}.csv`;
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  openDeleteConfirm(student: Student): void {
-    this.studentToDelete.set(student);
-    this.deletePasswordInput.set('');
-    this.deletePasswordError.set(null);
-    this.showDeleteConfirmModal.set(true);
-  }
-
-  cancelDelete(): void {
-    this.showDeleteConfirmModal.set(false);
-    this.studentToDelete.set(null);
-    this.deletePasswordInput.set('');
-    this.deletePasswordError.set(null);
-  }
-
-  async confirmDelete(): Promise<void> {
-    const student = this.studentToDelete();
-    if (!student) return;
-    
-    if (this.deletePasswordInput() !== '119') {
-      this.deletePasswordError.set(this.languageService.translate('errors.passwordIncorrect'));
-      this.deletePasswordInput.set('');
-      return;
-    }
-
-    this.isDeleting.set(true);
-    this.deletePasswordError.set(null);
-    try {
-      await this.studentService.deleteStudent(student.id);
-      this.cancelDelete(); // Close modal on success
-    } catch (error) {
-      console.error('Failed to delete student', error);
-      alert(this.languageService.translate('errors.deleteFailed'));
-    } finally {
-      this.isDeleting.set(false);
-    }
-  }
-
-  getStatusClass(status: StudentStatus): string {
-    switch (status) {
-      case '出席':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case '缺席':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case '請假':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  }
-}
+    @if (showDeleteConfirmModal() && studentToDelete(); as student) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelDelete()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+        <form (ngSubmit)="confirmDelete()">
+          <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.deleteModal.title') }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {{ languageService.translate('admin.deleteModal.description', { name: student.name, id: student.id }) }}
+            <br>
+            {{ languageService.translate('admin.deleteModal.description2') }}
+          </p>
+          
+          <div>
+            <label for="deletePassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
+            <input 
+              id="deletePassword"
+              type="password"
+              [ngModel]="deletePasswordInput()"
+              (ngModelChange)="deletePasswordInput.set($event); deletePasswordError.set(null)"
+              name="deletePassword"
+              [placeholder]="languageService.translate('admin.resetModal.passwordPlaceholder')"
+              autocomplete="current-password"
+              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
+            >
+          </div>
+          
+          @if (deletePasswordError()) {
+            <p class="text-red-500 text-sm mt-2">{{ deletePasswordError() }}</p>
+          }
+          
+          <div class="mt-6 flex justify-end space-x-3">
+            <button 
+              type="button" 
+              (click)="cancelDelete()"
+              [disabled]="isDeleting()"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition disabled:opacity-50"
+            >
+              {{ languageService.translate('common.cancel') }}
+            </button>
+            <button 
+              type="submit"
+              [disabled]="isDeleting()"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
+            >
+              @if(isDeleting()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ languageService.translate('common.deleting') }}</span>
+              } @else {
+                <span>{{ languageService.translate('common.confirmDelete') }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
