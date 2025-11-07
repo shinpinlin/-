@@ -40,3 +40,4 @@ export class AppComponent {
     this.currentUser.set(null);
     this.view.set('login');
   }
+
