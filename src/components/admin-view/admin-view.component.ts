@@ -117,7 +117,7 @@ export class AdminViewComponent {
       
       // 5. 成功！
       this.showResetPasswordModal.set(false);
-      alert(data.message); // 顯示 "成功：已將所有人員狀態重置為「出席默認」。"
+      alert(data.message); // 顯示 "成功：已將所有人員狀態重置為「出席」。"
 
       // 6. 🚀 🚀 🚀 最終修正 🚀 🚀 🚀
       // 我們將錯誤的 loadStudents() 換成 location.reload()
