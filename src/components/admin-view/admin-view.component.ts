@@ -81,24 +81,57 @@ export class AdminViewComponent {
     this.showResetPasswordModal.set(false);
   }
 
-  // Checks the password and performs the reset action
+  // 🚀 🚀 🚀 
+  // 💥 關鍵修正 💥
+  // 我們修改了這個函數，讓它呼叫「正確」的後端 API
+  // 🚀 🚀 🚀
   async confirmReset(): Promise<void> {
-    if (this.resetPasswordInput() === '119') {
-      this.passwordError.set(null);
-      this.isResetting.set(true);
-      try {
-        await this.studentService.resetToInitialList();
-        this.showResetPasswordModal.set(false);
-        alert(this.languageService.translate('admin.resetModal.resetSuccessAlert'));
-      } catch (error) {
-        console.error('Failed to reset student list', error);
-        this.passwordError.set(this.languageService.translate('errors.resetFailed'));
-      } finally {
-        this.isResetting.set(false);
-      }
-    } else {
+    // 1. 您的密碼檢查 (119)
+    if (this.resetPasswordInput() !== '119') {
       this.passwordError.set(this.languageService.translate('errors.passwordIncorrect'));
       this.resetPasswordInput.set('');
+      return; // 密碼錯誤，結束
+    }
+    
+    // 2. 密碼正確，開始呼叫
+    this.passwordError.set(null);
+    this.isResetting.set(true);
+    
+    // 3. 您的後端 API 網址
+    const apiUrl = 'https://rocallsystem-backend.onrender.com/api/v1/reset-attendance';
+
+    try {
+      // 4. 執行「正確的」 fetch 網路請求
+      const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          // 將 "119" 作為密碼傳送
+          body: JSON.stringify({ adminPassword: this.resetPasswordInput() }) 
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // 如果後端回傳錯誤 (例如密碼錯誤，雖然我們前端已檢查，但後端會再驗證)
+        throw new Error(data.message || '後端伺服器錯誤');
+      }
+      
+      // 5. 成功！
+      this.showResetPasswordModal.set(false);
+      alert(data.message); // 顯示 "成功：已將所有人員狀態重置為「出席默認」。"
+
+      // 6. 重新載入學生列表 (重要！)
+      this.studentService.loadStudents(); 
+
+    } catch (error) {
+      console.error('Failed to reset student list', error);
+      // 在 modal 中顯示錯誤
+      this.passwordError.set((error as Error).message || this.languageService.translate('errors.resetFailed'));
+    } finally {
+      // 結束 loading
+      this.isResetting.set(false);
     }
   }
   
