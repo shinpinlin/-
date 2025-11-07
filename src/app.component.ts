@@ -40,4 +40,39 @@ export class AppComponent {
     this.currentUser.set(null);
     this.view.set('login');
   }
+
+  // --- 🚀 這是我們新增的「重置」功能 ---
+  resetAttendance() {
+    // 1. 跳出輸入框，詢問密碼
+    const password = prompt("此為高風險操作，請輸入密碼以繼續：");
+
+    // 2. 如果使用者按了「取消」或沒輸入，就什麼都不做
+    if (!password) {
+        return; 
+    }
+
+    // 3. 您的後端 API 網址
+    // (根據您的 app.py，路徑是 /api/v1/reset-attendance)
+    // (根據您的 docx，後端主機是 rocallsystem-backend)
+    const apiUrl = 'https://rocallsystem-backend.onrender.com/api/v1/reset-attendance';
+
+    // 4. 將使用者輸入的密碼，"POST" 到您的「後端」API
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ adminPassword: password }) // 將密碼包在 JSON 中
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 5. 顯示後端傳回來的訊息 (成功或密碼錯誤)
+        alert(data.message); 
+    })
+    .catch(error => {
+        console.error('重置時發生錯誤:', error);
+        alert('操作失敗，請查看控制台日誌。');
+    });
+  }
+  // --- 新增功能結束 ---
 }
