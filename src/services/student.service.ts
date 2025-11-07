@@ -213,20 +213,18 @@ export class StudentService {
   }
 
   /**
-   * 👈 修正錯誤 5：setInitialList 是 private 的，
-   * resetToInitialList 才是 public 的。
-   * 這是 TS 建議的函式，但我們保留它
+   * 建立本機學生列表的初始狀態 (用於重置或首次載入)
    */
   private setInitialList(): void {
     const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
       id: s.id,
       name: s.name,
-      status: '出席',
+      // 🚀 關鍵修正 2：確保初始狀態是 '出席'
+      status: '出席', 
       lastUpdatedAt: new Date(),
     }));
     this._students.set(initialStudents);
-  }
-  
+  }  
   private updateCountdown(): void {
     const now = new Date();
     
