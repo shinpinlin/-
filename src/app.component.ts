@@ -40,7 +40,3 @@ export class AppComponent {
     this.currentUser.set(null);
     this.view.set('login');
   }
-
-  // --- 🚀 我們已將 resetAttendance() 函數移至 admin-view.component.ts 中 ---
-  // --- 這個檔案現在是乾淨的 ---
-}

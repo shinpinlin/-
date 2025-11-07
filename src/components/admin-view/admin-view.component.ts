@@ -219,5 +219,3 @@ export class AdminViewComponent {
     }
   }
 }
-```eof
-
