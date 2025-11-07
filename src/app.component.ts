@@ -41,3 +41,4 @@ export class AppComponent {
     this.view.set('login');
   }
 
+ }
