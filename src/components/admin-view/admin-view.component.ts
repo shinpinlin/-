@@ -142,6 +142,8 @@ export class AdminViewComponent {
     }
     
     const header = this.languageService.translate('admin.export.csvHeader') + '\n';
+    
+    // 🚀 🚀 🚀 修正：還原您被截斷的程式碼 🚀 🚀 🚀
     const csvRows = absentStudents.map(s => {
       const remarks = s.leaveRemarks || '';
       // Escape quotes by doubling them, and wrap in quotes if it contains comma or quote
@@ -153,6 +155,7 @@ export class AdminViewComponent {
 
       return `${s.id},${s.name},${translatedStatus},${translatedLeaveType},${sanitizedRemarks},${leaveTime}`;
     });
+    // 🚀 🚀 🚀 修正結束 🚀 🚀 🚀
 
     const csvContent = header + csvRows.join('\n');
     const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
