@@ -10,7 +10,6 @@
       @if(currentUser(); as user) {
         <app-student-view [currentUser]="user" (logout)="onLogout()"></app-student-view>
       } @else {
-        <!-- Fallback if currentUser is null, should not happen in normal flow -->
         <app-login 
           (studentLoginSuccess)="onStudentLogin($event)" 
           (adminLoginSuccess)="onAdminLogin()">
@@ -18,16 +17,12 @@
       }
     }
     @case ('admin') {
-      <!-- 🚀 這是我們新增的按鈕區塊 -->
-      <div style="padding: 1rem; background: #fef2f2; border-bottom: 1px solid #fecaca;">
-        <h3 style="font-weight: bold; margin: 0 0 0.5rem 0;">管理員特殊操作</h3>
-        <button (click)="resetAttendance()" style="background-color: #ef4444; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.25rem; cursor: pointer;">
-          重置所有學生狀態 (設為 '出席默認')
-        </button>
-      </div>
-
-      <!-- 這是您原本的管理員視圖 -->
-      <app-admin-view (logout)="onLogout()"></app-admin-view>
+      <!-- 
+        🚀 這裡已修改！
+        我們刪除了左上角的按鈕，並將 'resetAttendance' 函數
+        透過 (resetList) 傳遞給 <app-admin-view>
+      -->
+      <app-admin-view (logout)="onLogout()" (resetList)="resetAttendance()"></app-admin-view>
     }
   }
 </main>
