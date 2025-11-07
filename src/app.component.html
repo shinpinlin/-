@@ -10,7 +10,6 @@
       @if(currentUser(); as user) {
         <app-student-view [currentUser]="user" (logout)="onLogout()"></app-student-view>
       } @else {
-        <!-- Fallback if currentUser is null, should not happen in normal flow -->
         <app-login 
           (studentLoginSuccess)="onStudentLogin($event)" 
           (adminLoginSuccess)="onAdminLogin()">
@@ -18,12 +17,8 @@
       }
     }
     @case ('admin') {
-      <!-- 
-        🚀 這裡已清理！
-        我們移除了 (resetList) 綁定。
-        <app-admin-view> 現在自己處理重置邏輯。
-      -->
       <app-admin-view (logout)="onLogout()"></app-admin-view>
     }
   }
 </main>
+```eof
