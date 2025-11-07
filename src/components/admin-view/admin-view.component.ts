@@ -81,10 +81,7 @@ export class AdminViewComponent {
     this.showResetPasswordModal.set(false);
   }
 
-  // 🚀 🚀 🚀 
-  // 💥 關鍵修正 💥
-  // 我們修改了這個函數，讓它呼叫「正確」的後端 API
-  // 🚀 🚀 🚀
+  
   async confirmReset(): Promise<void> {
     // 1. 您的密碼檢查 (119)
     if (this.resetPasswordInput() !== '119') {
@@ -97,7 +94,7 @@ export class AdminViewComponent {
     this.passwordError.set(null);
     this.isResetting.set(true);
     
-    // 3. 您的後端 API 網址
+    // 3. 您的後端 API 網址 (指向我們在 app.py 建立的新 API)
     const apiUrl = 'https://rocallsystem-backend.onrender.com/api/v1/reset-attendance';
 
     try {
@@ -122,8 +119,10 @@ export class AdminViewComponent {
       this.showResetPasswordModal.set(false);
       alert(data.message); // 顯示 "成功：已將所有人員狀態重置為「出席默認」。"
 
-      // 6. 重新載入學生列表 (重要！)
-      this.studentService.loadStudents(); 
+      // 6. 🚀 🚀 🚀 最終修正 🚀 🚀 🚀
+      // 我們將錯誤的 loadStudents() 換成 location.reload()
+      // 這將會「重新整理網頁」，強制載入新資料
+      location.reload(); 
 
     } catch (error) {
       console.error('Failed to reset student list', error);
@@ -220,3 +219,42 @@ export class AdminViewComponent {
     }
   }
 }
+```eof
+
+---
+
+#### 步驟二：推送「前端」更新 (一步一步來)
+
+您的「後端」(`app.py`) 已經是正確的，不需要再推送。
+您只需要**推送「前端」**來修復這個建置錯誤。
+
+1.  **打開「CMD (命令提示字元)」**。
+2.  **切換到 D 槽：**
+    ```bash
+    D:
+    ```
+    (按下 `Enter`)
+3.  **進入您的「前端工作室」：**
+    ```bash
+    cd \rocallsystem
+    ```
+    (按下 `Enter`)
+4.  **將所有修改過的檔案加入暫存：**
+    ```bash
+    git add .
+    ```
+    (按下 `Enter`)
+5.  **建立一個提交 (紀錄)：**
+    ```bash
+    git commit -m "Fix: 修正 admin-view.component.ts 的 TS2551 錯誤"
+    ```
+    (按下 `Enter`)
+6.  **將這個提交推送到 GitHub：**
+    ```bash
+    git push origin master:main
+    ```
+    (按下 `Enter`)
+
+---
+
+####
