@@ -221,7 +221,7 @@ export class StudentService {
     const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
       id: s.id,
       name: s.name,
-      status: '缺席',
+      status: '出席',
       lastUpdatedAt: new Date(),
     }));
     this._students.set(initialStudents);
