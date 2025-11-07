@@ -6,13 +6,13 @@ import { Student, StudentStatus, LeaveType } from '../../models/student.model';
 import { LanguageService } from '../../services/language.service';
 
 @Component({
-  selector: 'app-admin-view',
-  templateUrl: './admin-view.component.html',
+  selector: 'app-student-view',
+  templateUrl: './student-view.component.html',
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminViewComponent {
+export class StudentViewComponent {
   studentService = inject(StudentService);
   public languageService = inject(LanguageService);
   logout = output<void>();
@@ -51,8 +51,8 @@ export class AdminViewComponent {
 
     // 2. Filter by search query on ID or name
     if (query) {
-      filtered = filtered.filter(s => 
-        s.id.toLowerCase().includes(query) || 
+      filtered = filtered.filter(s =>
+        s.id.toLowerCase().includes(query) ||
         s.name.toLowerCase().includes(query)
       );
     }
@@ -81,7 +81,6 @@ export class AdminViewComponent {
     this.showResetPasswordModal.set(false);
   }
 
-  
   async confirmReset(): Promise<void> {
     // 1. 您的密碼檢查 (119)
     if (this.resetPasswordInput() !== '119') {
@@ -89,23 +88,23 @@ export class AdminViewComponent {
       this.resetPasswordInput.set('');
       return; // 密碼錯誤，結束
     }
-    
+
     // 2. 密碼正確，開始呼叫
     this.passwordError.set(null);
     this.isResetting.set(true);
-    
+
     // 3. 您的後端 API 網址 (指向我們在 app.py 建立的新 API)
     const apiUrl = 'https://rocallsystem-backend.onrender.com/api/v1/reset-attendance';
 
     try {
       // 4. 執行「正確的」 fetch 網路請求
       const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          // 將 "119" 作為密碼傳送
-          body: JSON.stringify({ adminPassword: this.resetPasswordInput() }) 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        // 將 "119" 作為密碼傳送
+        body: JSON.stringify({ adminPassword: this.resetPasswordInput() })
       });
 
       const data = await response.json();
@@ -114,7 +113,7 @@ export class AdminViewComponent {
         // 如果後端回傳錯誤 (例如密碼錯誤，雖然我們前端已檢查，但後端會再驗證)
         throw new Error(data.message || '後端伺服器錯誤');
       }
-      
+
       // 5. 成功！
       this.showResetPasswordModal.set(false);
       alert(data.message); // 顯示 "成功：已將所有人員狀態重置為「出席默認」。"
@@ -122,7 +121,7 @@ export class AdminViewComponent {
       // 6. 🚀 🚀 🚀 最終修正 🚀 🚀 🚀
       // 我們將錯誤的 loadStudents() 換成 location.reload()
       // 這將會「重新整理網頁」，強制載入新資料
-      location.reload(); 
+      location.reload();
 
     } catch (error) {
       console.error('Failed to reset student list', error);
@@ -133,37 +132,34 @@ export class AdminViewComponent {
       this.isResetting.set(false);
     }
   }
-  
+
   exportAbsentList(): void {
     const absentStudents = this.studentService.students().filter(s => s.status !== '出席');
     if (absentStudents.length === 0) {
       alert(this.languageService.translate('admin.export.noAbsentStudents'));
       return;
     }
-    
+
     const header = this.languageService.translate('admin.export.csvHeader') + '\n';
-    
-    // 🚀 🚀 🚀 修正：還原您被截斷的程式碼 🚀 🚀 🚀
     const csvRows = absentStudents.map(s => {
       const remarks = s.leaveRemarks || '';
       // Escape quotes by doubling them, and wrap in quotes if it contains comma or quote
       const sanitizedRemarks = `"${remarks.replace(/"/g, '""')}"`;
-      
+
       const translatedStatus = this.languageService.translate(`statuses.${s.status}`);
       const translatedLeaveType = s.leaveType ? this.languageService.translate(`leaveTypes.${s.leaveType}`) : '';
       const leaveTime = s.status === '請假' ? s.lastUpdatedAt.toLocaleString(this.languageService.language()) : '';
 
       return `${s.id},${s.name},${translatedStatus},${translatedLeaveType},${sanitizedRemarks},${leaveTime}`;
     });
-    // 🚀 🚀 🚀 修正結束 🚀 🚀 🚀
 
     const csvContent = header + csvRows.join('\n');
     const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    const rollCallType = this.studentService.isEvening() ? 
-        this.languageService.translate('admin.export.eveningFileName') : 
-        this.languageService.translate('admin.export.morningFileName');
+    const rollCallType = this.studentService.isEvening() ?
+      this.languageService.translate('admin.export.eveningFileName') :
+      this.languageService.translate('admin.export.morningFileName');
     const filename = `${rollCallType}_${new Date().toISOString().slice(0,10)}.csv`;
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
@@ -189,7 +185,7 @@ export class AdminViewComponent {
   async confirmDelete(): Promise<void> {
     const student = this.studentToDelete();
     if (!student) return;
-    
+
     if (this.deletePasswordInput() !== '119') {
       this.deletePasswordError.set(this.languageService.translate('errors.passwordIncorrect'));
       this.deletePasswordInput.set('');
