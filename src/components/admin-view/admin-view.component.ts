@@ -229,8 +229,8 @@ export class AdminViewComponent implements OnInit {
           time = date.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
         } catch (e) {
           console.error("時間轉換失敗:", student.lastUpdatedAt, e);
-          time = student.lastUpdatedAt; // 轉換失敗，使用原始字串
-        }
+          time = student.lastUpdatedAt.toISOString(); 
+}
       }
 
       const row = [
