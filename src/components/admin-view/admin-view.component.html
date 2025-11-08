@@ -134,7 +134,12 @@
                 </td>
                 <td class="px-6 py-4">{{ student.leaveType ? languageService.translate('leaveTypes.' + getCleanLeaveType(student.leaveType)) : '無' }}</td>
                 <td class="px-6 py-4">{{ student.leaveRemarks || '無' }}</td>
-                <!-- 修正 3: 這裡使用了 DatePipe，會修正 NG8113 警告 -->
+                <!-- 
+                  🚨 
+                  最終時區修正：
+                  移除 ': 'Asia/Taipei'' 因為 student.service.ts 已經轉換過了
+                  🚨 
+                -->
                 <td class="px-6 py-4 whitespace-nowrap">{{ student.lastUpdatedAt | date:'MM/dd HH:mm:ss' }}</td>
                 <td class="px-6 py-4 text-center">
                   <button (click)="openDeleteConfirm(student)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
