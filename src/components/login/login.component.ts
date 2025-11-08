@@ -33,6 +33,7 @@ export class LoginComponent {
     return student ? student.name : null;
   });
 
+  // 🚀 修正後的 handleStudentLogin 函式
   async handleStudentLogin() {
     this.errorMessage.set(null);
     const id = this.studentId().trim();
@@ -51,10 +52,17 @@ export class LoginComponent {
     try {
       const student = await this.studentService.login(id);
       this.studentLoginSuccess.emit(student);
-    } catch (error) {
+    } catch (error: any) { 
       console.error("Login failed", error);
-      const messageKey = error instanceof Error ? error.message : 'errors.loginFailed';
-      this.errorMessage.set(this.languageService.translate(messageKey));
+      
+      let translationKey = 'errors.loginFailed'; 
+      
+      // 檢查後端錯誤回覆 (HttpErrorResponse)，確保能顯示後端提供的錯誤碼/訊息
+      if (error && error.error && typeof error.error.error === 'string') {
+          translationKey = error.error.error; 
+      }
+      
+      this.errorMessage.set(this.languageService.translate(translationKey));
     } finally {
       this.isLoading.set(false);
     }
