@@ -45,6 +45,19 @@ export class AdminViewComponent implements OnInit {
     this.studentService.fetchStudents();
   }
 
+  // --- 🚀 新增：清理假別名稱的輔助函式 (解決顯示問題) ---
+  getCleanLeaveType(leaveType: string | null): string {
+    if (!leaveType) return '';
+    
+    // 檢查並移除後端可能儲存的 '請假-' 前綴 (處理舊資料或未修正的後端)
+    const prefix = '請假-';
+    if (leaveType.startsWith(prefix)) {
+      return leaveType.substring(prefix.length);
+    }
+    // 否則直接返回假別名稱 (處理新資料或已修正的後端)
+    return leaveType;
+  }
+
   // 篩選學生的計算屬性 (Computed Signal)
   filteredStudents = computed(() => {
     const students = this.studentService.students();
@@ -62,8 +75,12 @@ export class AdminViewComponent implements OnInit {
       }
       
       // 檢查請假類型過濾
-      if (leaveType !== 'all' && normalizedStatus === '請假' && student.leaveType !== leaveType) {
-        return false;
+      if (leaveType !== 'all' && normalizedStatus === '請假') {
+        // 使用清理後的假別進行比對
+        const cleanLeaveType = this.getCleanLeaveType(student.leaveType);
+        if (cleanLeaveType !== leaveType) {
+          return false;
+        }
       }
 
       // 檢查搜尋欄位
@@ -115,7 +132,6 @@ export class AdminViewComponent implements OnInit {
     this.showResetPasswordModal.set(false);
   }
   
-  // 🚀 修正後的 confirmReset 函式
   async confirmReset(): Promise<void> {
     const password = this.resetPasswordInput();
     
@@ -128,21 +144,17 @@ export class AdminViewComponent implements OnInit {
 
     this.isResetting.set(true);
     try {
-      // 1. 執行後端重置 API
       await this.studentService.resetToInitialList(password);
-      
-      // 🚀 最終修正：在後端重置成功後，立即要求前端刷新數據 (確保儀表板數字歸零)
-      this.studentService.fetchStudents(); 
-      
+      this.studentService.fetchStudents(); 
+      
       this.showResetPasswordModal.set(false);
       this.resetPasswordInput.set(''); 
 
     } catch (error: any) {
       console.error('Failed to reset status:', error);
       
-      let translationKey = 'errors.resetFailed'; // 預設值
+      let translationKey = 'errors.resetFailed'; 
       
-      // 檢查後端錯誤回覆 (HttpErrorResponse)，確保能顯示後端提供的錯誤碼/訊息
       if (error && error.error && typeof error.error.error === 'string') {
           translationKey = error.error.error; 
       }
@@ -192,9 +204,61 @@ export class AdminViewComponent implements OnInit {
     }
   }
   
-  // 匯出功能 (保持原樣，僅作為佔位符)
+  // --- 🚀 新增：匯出缺席名單為 CSV 功能 ---
   exportAbsentList() {
-    // 這裡需要實作匯出邏輯，目前只在 Console 顯示訊息
-    console.log("Exporting absent list...");
+    // 1. 過濾出缺席及請假學生
+    const students = this.studentService.students();
+    const absentStudents = students.filter(s => s.status !== '出席');
+
+    if (absentStudents.length === 0) {
+      console.warn(this.languageService.translate('admin.noAbsentToExport') || '沒有缺席或請假人員可匯出。');
+      return;
+    }
+
+    // 2. 準備 CSV 內容
+    const header = [
+      this.languageService.translate('admin.studentId'),
+      this.languageService.translate('admin.name'),
+      this.languageService.translate('admin.status'),
+      this.languageService.translate('admin.leaveType'),
+      this.languageService.translate('admin.remarks'),
+      this.languageService.translate('admin.lastUpdated')
+    ].join(',');
+
+    const rows = absentStudents.map(student => {
+        // 取得乾淨的假別名稱 (例如：只取 '論文假')
+        const cleanLeaveType = this.getCleanLeaveType(student.leaveType);
+        
+        return [
+          `"${student.id}"`, // 使用雙引號確保不丟失前導零，且兼容逗號
+          `"${student.name}"`,
+          `"${this.languageService.translate('statuses.' + student.status)}"`,
+          `"${student.leaveType ? this.languageService.translate('leaveTypes.' + cleanLeaveType) : '無'}"`,
+          `"${student.leaveRemarks || ''}"`,
+          // 格式化時間
+          `"${student.lastUpdatedAt ? new Date(student.lastUpdatedAt).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}"`
+        ].join(',');
+    });
+
+    const csvContent = [header, ...rows].join('\n');
+    
+    // 3. 觸發下載 (使用 Blob 和 BOM 確保中文在 Excel 中正確顯示)
+    // '\ufeff' 是 Byte Order Mark (BOM)，確保 Excel 正確識別 UTF-8
+    const blob = new Blob(['\ufeff', csvContent], { type: 'text/csv;charset=utf-8;' }); 
+    const url = URL.createObjectURL(blob);
+    
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+    const filename = `${this.languageService.translate('admin.absentListFilename')}_${dateStr}.csv`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log(`${this.languageService.translate('admin.exportSuccess', { count: absentStudents.length })}`);
   }
 }
