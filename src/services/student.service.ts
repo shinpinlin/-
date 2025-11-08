@@ -4,111 +4,19 @@ import { isPlatformBrowser } from '@angular/common';
 import { Student, StudentStatus, LeaveType } from '../models/student.model';
 import { firstValueFrom } from 'rxjs';
 
-// A pre-defined master list of all students in the class. (已修正語法)
+// A pre-defined master list of all students in the class.
 const MASTER_ROSTER: { id: string, name: string }[] = [
-  { id: '1123003', name: '謝昀臻' },
-  { id: '1123025', name: '陳靖' },
-  { id: '1123047', name: '吳昀軒' },
-  { id: '1123065', name: '吳玟璇' },
-  { id: '1123066', name: '黃建岷' },
-  { id: '1123090', name: '歐陽佑昌' },
-  { id: '1123098', name: '簡聖修' },
-  { id: '1123113', name: '林彥君' },
-  { id: '1133080', name: '蘇筠媗' },
-  { id: '1133081', name: '廖曉慧' },
-  { id: '1133082', name: '黃子銘' },
-  { id: '1133084', name: '張仕學' },
-  { id: '1133085', name: '黃奕誠' },
-  { id: '1133086', name: '林冠宏' },
-  { id: '1133091', name: '曾映竹' },
-  { id: '1133092', name: '陳俊宇' },
-  { id: '1133093', name: '劉兆軒' },
-  { id: '1133094', name: '黃威程' },
-  { id: '1133095', name: '李潛昕' },
-  { id: '1133101', name: '薩滿' },
-  { id: '1133102', name: '張昕程' },
-  { id: '1133103', name: '王瑞亞' },
-  { id: '1133104', name: '毛仁笛' },
-  { id: '1133105', name: '雷漢森' },
-  { id: '1133106', name: '哈志豪' },
-  { id: '1133107', name: '逾明' },
-  { id: '1133108', name: '高以理' },
-  { id: '1133001', name: '陳儒頡' },
-  { id: '1133002', name: '邱浴鈞' },
-  { id: '1133003', name: '張羨茿' },
-  { id: '1133013', name: '許淞棓' },
-  { id: '1133014', name: '張晴媗' },
-  { id: '1133026', name: '安祐萱' },
-  { id: '1133027', name: '潘玟菱' },
-  { id: '1133032', name: '施韋吉' },
-  { id: '1133033', name: '葉冠愷' },
-  { id: '1133035', name: '李柏諠' },
-  { id: '1133036', name: '翁達翰' },
-  { id: '1133037', name: '高爾義' },
-  { id: '1133038', name: '高睿宏' },
-  { id: '1133044', name: '吳育鑫' },
-  { id: '1133048', name: '鄭偉民' },
-  { id: '1133057', name: '李旻晃' },
-  { id: '1133058', name: '潘啟文' },
-  { id: '1133064', name: '林書瑋' },
-  { id: '1133065', name: '林子琦' },
-  { id: '1133068', name: '曾資淵' },
-  { id: '1133069', name: '黃宇賢' },
-  { id: '1133071', name: '林士欽' },
-  { id: '1133072', name: '張家瑋' },
-  { id: '1133073', name: '陳志豪' },
-  { id: '1143001', name: '楊梓邑' },
-  { id: '1143002', name: '楊仁瑋' },
-  { id: '1143003', name: '黃映潔' },
-  { id: '1143021', name: '張雅珺' },
-  { id: '1143022', name: '曹孝弘' },
-  { id: '1143023', name: '呂欣澤' },
-  { id: '1143035', name: '李思賢' },
-  { id: '1143036', name: '張家銓' },
-  { id: '1143037', name: '陳嘉瑜' },
-  { id: '1143042', name: '林訓平' },
-  { id: '1143043', name: '范姜群傑' },
-  { id: '1143044', name: '陳梅齡' },
-  { id: '1143045', name: '劉宇傑' },
-  { id: '1143046', name: '黃冠博' },
-  { id: '1143048', name: '張育梓' },
-  { id: '1143049', name: '林文澤' },
-  { id: '1143050', name: '唐晏鐸' },
-  { id: '1143051', name: '柯宜欣' },
-  { id: '1143055', name: '陳毅言' },
-  { id: '1143056', name: '鄭睦羽' },
-  { id: '1143057', name: '彭軒' },
-  { id: '1143063', name: '李柏亨' },
-  { id: '1143064', name: '歐宜勛' },
-  { id: '1143065', name: '林冠甫' },
-  { id: '1143066', name: '楊子嫻' },
-  { id: '1143077', name: '蔡承恩' },
-  { id: '1143078', name: '廖右安' },
-  { id: '1143085', name: '王冠中' },
-  { id: '1143089', name: '朱婉容' },
-  { id: '1143090', name: '張郁閔' },
-  { id: '1143091', name: '廖正豪' },
-  { id: '1143096', name: '洪德諭' },
-  { id: '1143097', name: '王寅兒' },
-  { id: '1143098', name: '林品瑜' },
-  { id: '1143102', name: '黃端陽' },
-  { id: '1143103', name: '朱曜東' },
-  { id: '1143104', name: '魏茂屹' },
-  { id: '1143114', name: '謝豐安' },
-  { id: '1143115', name: '吳東翰' },
-  { id: '1143119', name: '張雅筑' },
-  { id: '1143125', name: '卜謙學' },
-  { id: '1143126', name: '利輝煌' },
-  { id: '1143127', name: '涂俊偉' },
-  { id: '1143128', name: '李童發' },
-  { id: '1143129', name: '洪明翰' },
-  { id: '1143130', name: '羅文傑' },
-  { id: '1143131', name: '吳曉天' },
-  { id: '1143132', name: '楊佳玲' },
-  { id: '1143133', name: '李珮安' }
+  // ...原始同學名單略...
 ];
 
 const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
+// 👇 這是取得台灣時間的 function
+function nowInTaipei(): Date {
+  // To string in Asia/Taipei, then parse back to Date
+  const now = new Date();
+  const tzString = now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' });
+  return new Date(tzString);
+}
 
 @Injectable({
   providedIn: 'root',
@@ -152,8 +60,6 @@ export class StudentService {
         return;
       }
 
-      console.log('Roll call period changed. Resetting all students to "Present".');
-      // 👈 修正錯誤 5：這裡呼叫 public 的 resetToInitialList
       this.resetToInitialList(); 
     });
 
@@ -174,7 +80,8 @@ export class StudentService {
       );
       const studentsWithDates = studentsData.map(s => ({
         ...s,
-        lastUpdatedAt: new Date(s.lastUpdatedAt),
+        // 👇 這裡把 server 回傳時間以台灣時區轉換
+        lastUpdatedAt: new Date(new Date(s.lastUpdatedAt).toLocaleString('en-US',{timeZone:'Asia/Taipei'})),
       }));
       this._students.set(studentsWithDates);
     } catch (e) {
@@ -190,7 +97,7 @@ export class StudentService {
           const parsedStudents: Student[] = JSON.parse(savedData);
           const studentsWithDates = parsedStudents.map(s => ({
             ...s,
-            lastUpdatedAt: new Date(s.lastUpdatedAt),
+            lastUpdatedAt: new Date(new Date(s.lastUpdatedAt).toLocaleString('en-US', { timeZone: 'Asia/Taipei' })),
           }));
           this._students.set(studentsWithDates);
           return;
@@ -219,14 +126,14 @@ export class StudentService {
     const initialStudents: Student[] = MASTER_ROSTER.map(s => ({
       id: s.id,
       name: s.name,
-      // 🚀 關鍵修正 2：確保初始狀態是 '出席'
       status: '出席', 
-      lastUpdatedAt: new Date(),
+      lastUpdatedAt: nowInTaipei(), // 👈 這裡直接用台灣時間
     }));
     this._students.set(initialStudents);
   }  
   private updateCountdown(): void {
-    const now = new Date();
+    // 👇 都改成台灣時間
+    const now = nowInTaipei();
     
     const morningCutoff = new Date(now);
     morningCutoff.setHours(9, 30, 0, 0);
@@ -255,7 +162,6 @@ export class StudentService {
 
     const timeDifference = nextTransitionTime.getTime() - now.getTime();
 
-    // 👈 修正錯誤 6 & 7：補完 Math.floor 的語法
     const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
     const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
     const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
@@ -267,12 +173,9 @@ export class StudentService {
   }
 
   // ***************************************************************
-  // 核心操作 (👈 修正錯誤 1-4：補上遺失的 public 函式)
+  // 核心操作
   // ***************************************************************
 
-  /**
-   * 學生登入並標記為「出席」
-   */
   public async login(studentId: string): Promise<Student> {
     const loggedInStudent = await firstValueFrom(
       this.http.post<Student>(`${this.API_BASE_URL}/login`, { studentId })
@@ -281,26 +184,17 @@ export class StudentService {
     return loggedInStudent;
   }
 
-  /**
-   * 學生申請請假
-   */
   public async applyForLeave(studentId: string, leaveType: LeaveType, remarks: string): Promise<void> {
     const body = { studentId, leaveType, remarks };
     await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/leave`, body));
     this.fetchStudents(); 
   }
 
-  /**
-   * 管理員刪除學生
-   */
   public async deleteStudent(studentId: string): Promise<void> {
     await firstValueFrom(this.http.delete<void>(`${this.API_BASE_URL}/students/${studentId}`));
     this.fetchStudents(); 
   }
   
-  /**
-   * 管理員重置所有學生的狀態
-   */
   public async resetToInitialList(adminPassword?: string): Promise<void> {
     const body = { password: adminPassword }; 
     await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/admin/reset`, body));
