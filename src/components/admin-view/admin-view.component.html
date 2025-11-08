@@ -5,57 +5,95 @@
       <div class="flex items-center">
         <button (click)="logout.emit()" class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
           <span>{{ languageService.translate('common.logout') }}</span>
-          <!-- ...logout icon... -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
         </button>
       </div>
     </div>
   </header>
 
   <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-    <!-- 修正：統計卡片區，高度絕對一致 -->
+    <!-- 修正 1: 統計卡片區。移除多餘的包裝層 div，讓卡片直接成為 Grid 的子項 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg h-full flex flex-col justify-center items-center">
-        <div class="bg-blue-500 p-3 rounded-full flex-shrink-0 mb-2">
-          <!-- icon -->
+      
+      <!-- 卡片 1: 總學生人數 (直接是 Grid Item) -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 h-full">
+        <div class="bg-blue-500 p-3 rounded-full flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.totalStudents') }}</p>
-        <p class="text-3xl font-bold">{{ studentService.totalStudents() }}</p>
+        <div class="flex flex-col justify-center h-full">
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.totalStudents') }}</p>
+          <p class="text-3xl font-bold">{{ studentService.totalStudents() }}</p>
+        </div>
       </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg h-full flex flex-col justify-center items-center">
-        <div class="bg-green-500 p-3 rounded-full flex-shrink-0 mb-2">
-          <!-- icon -->
+      
+      <!-- 卡片 2: 出席人數 (直接是 Grid Item) -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 h-full">
+        <div class="bg-green-500 p-3 rounded-full flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.presentStudents') }}</p>
-        <p class="text-3xl font-bold">{{ studentService.presentStudents() }}</p>
+        <div class="flex flex-col justify-center h-full">
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.presentStudents') }}</p>
+          <p class="text-3xl font-bold">{{ studentService.presentStudents() }}</p>
+        </div>
       </div>
-      <div (click)="toggleAbsentFilter()" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg h-full flex flex-col justify-center items-center cursor-pointer hover:shadow-xl transition-shadow duration-300">
-        <div class="bg-red-500 p-3 rounded-full flex-shrink-0 mb-2">
-          <!-- icon -->
+      
+      <!-- 卡片 3: 未出席/請假人數 (可點擊, 直接是 Grid Item) -->
+      <div (click)="toggleAbsentFilter()" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 cursor-pointer hover:shadow-xl transition-shadow duration-300 h-full">
+        <div class="bg-red-500 p-3 rounded-full flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.absentStudents') }}</p>
-        <p class="text-3xl font-bold">{{ studentService.absentStudents() }}</p>
+        <div class="flex flex-col justify-center h-full">
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ languageService.translate('admin.absentStudents') }}</p>
+          <p class="text-3xl font-bold">{{ studentService.absentStudents() }}</p>
+        </div>
       </div>
     </div>
 
-    <!-- 搜尋/篩選區：搜尋在最左 -->
+    <!-- 管理操作區塊 (保持不變) -->
+    <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <h2 class="text-xl font-semibold">{{ languageService.translate('admin.managementActions') }}</h2>
+          @if (studentService.isEvening()) {
+            <span class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+              {{ languageService.translate('admin.eveningRollCall', { countdown: studentService.countdown() }) }}
+            </span>
+          } @else {
+            <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+              {{ languageService.translate('admin.morningRollCall', { countdown: studentService.countdown() }) }}
+            </span>
+          }
+        </div>
+        <div class="flex items-center space-x-3 flex-wrap gap-2">
+            <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">{{ languageService.translate('admin.resetStatus') }}</button>
+            <button (click)="exportAbsentList()" class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">{{ languageService.translate('admin.exportAbsentList') }}</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 修正 2: 搜尋/篩選卡片區域 (已壓縮高度) -->
     <div class="mb-6 p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- 搜尋學生 (在最左邊) -->
         <div class="flex flex-col">
           <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageService.translate('admin.searchStudent') }}</label>
-          <input
-            type="text"
+          <input 
+            type="text" 
             id="search"
             [placeholder]="languageService.translate('admin.searchPlaceholder')"
-            [ngModel]="searchQuery()"
+            [ngModel]="searchQuery()" 
             (ngModelChange)="searchQuery.set($event)"
             class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           >
         </div>
+        <!-- 篩選假別 (在右邊) -->
         <div class="flex flex-col">
           <label for="leave-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageService.translate('admin.filterLeaveType') }}</label>
-          <select
+          <select 
             id="leave-filter"
-            [ngModel]="leaveTypeFilter()"
+            [ngModel]="leaveTypeFilter()" 
             (ngModelChange)="leaveTypeFilter.set($event)"
             class="w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           >
@@ -68,7 +106,7 @@
       </div>
     </div>
 
-    <!-- 表格 -->
+    <!-- 這裡是第 118 行之後的內容 -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -82,6 +120,7 @@
               <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.lastUpdated') }}</th>
               <th scope="col" class="px-6 py-3 text-center">{{ languageService.translate('admin.actions') }}</th>
             </tr>
+            
           </thead>
           <tbody>
             @for (student of filteredStudents(); track student.id) {
@@ -95,6 +134,7 @@
                 </td>
                 <td class="px-6 py-4">{{ student.leaveType ? languageService.translate('leaveTypes.' + getCleanLeaveType(student.leaveType)) : '無' }}</td>
                 <td class="px-6 py-4">{{ student.leaveRemarks || '無' }}</td>
+                <!-- 修正 3: 這裡使用了 DatePipe，會修正 NG8113 警告 -->
                 <td class="px-6 py-4 whitespace-nowrap">{{ student.lastUpdatedAt | date:'MM/dd HH:mm:ss' }}</td>
                 <td class="px-6 py-4 text-center">
                   <button (click)="openDeleteConfirm(student)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
@@ -114,6 +154,117 @@
       </div>
     </div>
   </main>
-
+  
+  <!-- 修正 4: 確保所有 @if 區塊都正確關閉 -->
   @if (showResetPasswordModal()) {
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelReset()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+        <form (ngSubmit)="confirmReset()">
+          <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.resetModal.title') }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ languageService.translate('admin.resetModal.description') }}</p>
+          
+          <div>
+            <label for="resetPassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
+            <input 
+              id="resetPassword"
+              type="password"
+              [ngModel]="resetPasswordInput()"
+              (ngModelChange)="resetPasswordInput.set($event); passwordError.set(null)"
+              name="resetPassword"
+              [placeholder]="languageService.translate('admin.resetModal.passwordPlaceholder')"
+              autocomplete="current-password"
+              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
+            >
+          </div>
+          
+          @if (passwordError()) {
+            <p class="text-red-500 text-sm mt-2">{{ passwordError() }}</p>
+          }
+
+          <div class="mt-6 flex justify-end space-x-3">
+            <button 
+              type="button" 
+              (click)="cancelReset()" 
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+            >
+              {{ languageService.translate('common.cancel') }}
+            </button>
+            <button 
+              type="submit"
+              [disabled]="isResetting()"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
+            >
+              @if(isResetting()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ languageService.translate('common.resetting') }}</span>
+              } @else {
+                <span>{{ languageService.translate('common.confirmReset') }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (showDeleteConfirmModal() && studentToDelete(); as student) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelDelete()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
+        <form (ngSubmit)="confirmDelete()">
+          <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.deleteModal.title') }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {{ languageService.translate('admin.deleteModal.description', { name: student.name, id: student.id }) }}
+            <br>
+            {{ languageService.translate('admin.deleteModal.description2') }}
+          </p>
+          <div>
+            <label for="deletePassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
+            <input
+              id="deletePassword"
+              type="password"
+              [ngModel]="deletePasswordInput()"
+              (ngModelChange)="deletePasswordInput.set($event); deletePasswordError.set(null)"
+              name="deletePassword"
+              [placeholder]="languageService.translate('admin.resetModal.passwordPlaceholder')"
+              autocomplete="current-password"
+              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
+            >
+          </div>
+          
+          @if (deletePasswordError()) {
+            <p class="text-red-500 text-sm mt-2">{{ deletePasswordError() }}</p>
+          }
+          
+          <div class="mt-6 flex justify-end space-x-3">
+            <button
+              type="button"
+              (click)="cancelDelete()"
+              [disabled]="isDeleting()"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition disabled:opacity-50"
+            >
+              {{ languageService.translate('common.cancel') }}
+            </button>
+            <button
+              type="submit"
+              [disabled]="isDeleting()"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
+            >
+              @if(isDeleting()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ languageService.translate('common.deleting') }}</span>
+              } @else {
+                <span>{{ languageService.translate('common.confirmDelete') }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
