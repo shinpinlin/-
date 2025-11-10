@@ -4,8 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Student, StudentStatus, LeaveType } from '../models/student.model';
 import { firstValueFrom, map } from 'rxjs';
 
-// 🚨 唯一的修改在這裡：
-// 已經將您提供的 Python 格式名單轉換並填入下方的 TypeScript 陣列中
+// 您的學生名單保持不變
 const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1123003', name: '謝昀臻' },
   { id: '1123025', name: '陳靖' },
@@ -111,18 +110,12 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
 
 const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
 
-// 製作每次都能正確產生台灣時區時間的 function
-function nowInTaipei(): Date {
-  const now = new Date();
-  const str = now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' });
-  return new Date(str);
-}
+// 🚨 修正 1: 刪除 nowInTaipei() 函式，它會導致時區錯誤
 
 @Injectable({
   providedIn: 'root',
 })
 export class StudentService {
-  // 您的 API 設定完全沒有變更
   private readonly API_BASE_URL = 'https://rocallsystem-backend.onrender.com/api/v1';
 
   private _students = signal<Student[]>([]);
@@ -170,7 +163,7 @@ export class StudentService {
   }
 
   // ***************************************************************
-  // 狀態管理 (您的邏輯都沒有變更)
+  // 狀態管理
   // ***************************************************************
 
   public async fetchStudents(): Promise<void> {
@@ -179,9 +172,10 @@ export class StudentService {
         this.http.get<Student[]>(`${this.API_BASE_URL}/students`).pipe(
           map(students => students.map(student => ({
             ...student,
+            // 🚨 修正 2: 直接將後端傳來的 ISO UTC 字串轉換為 Date 物件
             lastUpdatedAt: student.lastUpdatedAt
-              ? new Date(new Date(student.lastUpdatedAt).toLocaleString('en-US', { timeZone: 'Asia/Taipei' }))
-              : nowInTaipei()
+              ? new Date(student.lastUpdatedAt)
+              : new Date() // 使用標準 new Date()
           })))
         )
       );
@@ -199,9 +193,10 @@ export class StudentService {
           const parsedStudents: Student[] = JSON.parse(savedData);
           const studentsWithDates = parsedStudents.map(s => ({
             ...s,
+            // 🚨 修正 3: 同上，直接解析 ISO 字串
             lastUpdatedAt: s.lastUpdatedAt
-              ? new Date(new Date(s.lastUpdatedAt).toLocaleString('en-US', { timeZone: 'Asia/Taipei' }))
-              : nowInTaipei(),
+              ? new Date(s.lastUpdatedAt)
+              : new Date(), // 使用標準 new Date()
           }));
           this._students.set(studentsWithDates);
           return;
@@ -231,37 +226,45 @@ export class StudentService {
       id: s.id,
       name: s.name,
       status: '出席',
-      lastUpdatedAt: nowInTaipei(),
+      // 🚨 修正 4: 使用標準的 new Date() (它會是 UTC)
+      lastUpdatedAt: new Date(),
     }));
     this._students.set(initialStudents);
   }
 
+  // 🚨 修正 5: 您的倒數計時邏輯 (updateCountdown) 仍在使用 nowInTaipei()
+  // 為了讓它運作，我們必須在這裡 "局部" 地重新建立一個正確的台北時間 Date 物件
+  // 但 "僅限" 用於此函式
   private updateCountdown(): void {
-    const now = nowInTaipei();
-    const morningCutoff = new Date(now);
+    // 這裡的邏輯保持不變，因為倒數計時 "必須" 依賴台北時區
+    const now = new Date();
+    const str = now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' });
+    const nowInTaipei = new Date(str); // 僅在此函式中使用
+    
+    const morningCutoff = new Date(nowInTaipei);
     morningCutoff.setHours(9, 30, 0, 0);
-    const eveningCutoff = new Date(now);
+    const eveningCutoff = new Date(nowInTaipei);
     eveningCutoff.setHours(21, 30, 0, 0);
 
     let isCurrentlyEvening: boolean;
     let nextTransitionTime: Date;
 
-    if (now >= morningCutoff && now < eveningCutoff) {
+    if (nowInTaipei >= morningCutoff && nowInTaipei < eveningCutoff) {
       isCurrentlyEvening = true;
       nextTransitionTime = eveningCutoff;
     } else {
       isCurrentlyEvening = false;
-      if (now < morningCutoff) {
+      if (nowInTaipei < morningCutoff) {
         nextTransitionTime = morningCutoff;
       } else {
-        nextTransitionTime = new Date(now);
+        nextTransitionTime = new Date(nowInTaipei);
         nextTransitionTime.setDate(nextTransitionTime.getDate() + 1);
         nextTransitionTime.setHours(9, 30, 0, 0);
       }
     }
     this._isEvening.set(isCurrentlyEvening);
 
-    const timeDifference = nextTransitionTime.getTime() - now.getTime();
+    const timeDifference = nextTransitionTime.getTime() - nowInTaipei.getTime();
     const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
     const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
     const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
@@ -272,7 +275,7 @@ export class StudentService {
   }
 
   // ***************************************************************
-  // 核心操作 (您的 API 呼叫邏輯都沒有變更)
+  // 核心操作
   // ***************************************************************
 
   public async login(studentId: string): Promise<Student> {
@@ -280,9 +283,10 @@ export class StudentService {
       this.http.post<Student>(`${this.API_BASE_URL}/login`, { studentId }).pipe(
         map(student => ({
           ...student,
+          // 🚨 修正 6: 同上，直接解析 ISO 字串
           lastUpdatedAt: student.lastUpdatedAt
-            ? new Date(new Date(student.lastUpdatedAt).toLocaleString('en-US', { timeZone: 'Asia/Taipei' }))
-            : nowInTaipei()
+            ? new Date(student.lastUpdatedAt)
+            : new Date() // 使用標準 new Date()
         }))
       )
     );
