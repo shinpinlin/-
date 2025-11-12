@@ -45,7 +45,7 @@ export class AdminViewComponent implements OnInit {
   }
 
   // 💡 加在這裡！台灣時間轉換工具
-  getTaipeiTime(utcString: string | undefined | null): string {
+   getTaipeiTime(utcString: string | undefined | null): string {
     if (!utcString) return '';
     try {
       return new Date(utcString).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
