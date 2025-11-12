@@ -106,8 +106,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1143131', name: '吳曉天' },
   { id: '1143132', name: '楊佳玲' },
   { id: '1143133', name: '李珮安' }
-];// ... 其餘名單照原始資料繼續寫下去 ...
-];
+];// 
 const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
 
 // <===== 以下為核心服務邏輯 =====>
