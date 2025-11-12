@@ -1,13 +1,3 @@
-getTaipeiTime(utcString: string | undefined | null): string {
-  console.log('DEBUG lastUpdatedAt', utcString, typeof utcString);
-  if (!utcString) return '';
-  try {
-    const dateObject = new Date(utcString);
-    return dateObject.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-  } catch {
-    return String(utcString);
-  }
-}
 import { Component, ChangeDetectionStrategy, output, signal, inject, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -24,13 +14,10 @@ import { LanguageService } from '../../services/language.service';
 })
 export class AdminViewComponent implements OnInit {
   logout = output<void>();
-
-  // 篩選/搜尋相關 Signal
   searchQuery = signal('');
   leaveTypeFilter = signal('all'); 
   showAbsentOnly = signal(false); 
 
-  // 模態框相關 Signal
   showResetPasswordModal = signal(false);
   resetPasswordInput = signal('');
   passwordError = signal<string | null>(null);
@@ -42,11 +29,9 @@ export class AdminViewComponent implements OnInit {
   deletePasswordError = signal<string | null>(null);
   isDeleting = signal(false);
 
-  // 服務注入
   public studentService = inject(StudentService);
   public languageService = inject(LanguageService);
 
-  // 靜態資料
   readonly leaveTypes: LeaveType[] = ['病假', '事假', '論文假', '其他'];
   private readonly ADMIN_DELETE_PASSWORD = '119'; 
 
@@ -54,17 +39,18 @@ export class AdminViewComponent implements OnInit {
     this.studentService.fetchStudents();
   }
 
-  // 💡 加在這裡！台灣時間轉換工具
-   getTaipeiTime(utcString: string | undefined | null): string {
+  // 台灣時間轉換工具 (有 log)
+  getTaipeiTime(utcString: string | undefined | null): string {
+    console.log('DEBUG lastUpdatedAt', utcString, typeof utcString);
     if (!utcString) return '';
     try {
-      return new Date(utcString).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+      const dateObject = new Date(utcString);
+      return dateObject.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
     } catch {
-      return utcString as string;
+      return String(utcString);
     }
   }
 
-  // 篩選學生的計算屬性
   filteredStudents = computed(() => {
     const students = this.studentService.students();
     const query = this.searchQuery().toLowerCase();
@@ -73,7 +59,6 @@ export class AdminViewComponent implements OnInit {
 
     let filtered = students.filter(student => {
       const normalizedStatus = student.status ? student.status.trim() : '';
-
       if (absentOnly && normalizedStatus === '出席') {
         return false;
       }
@@ -151,7 +136,7 @@ export class AdminViewComponent implements OnInit {
       console.error('Failed to reset status:', error);
       let translationKey = 'errors.resetFailed'; 
       if (error && error.error && typeof error.error.error === 'string') {
-          translationKey = error.error.error; 
+        translationKey = error.error.error; 
       }
       this.passwordError.set(this.languageService.translate(translationKey));
     } finally {
@@ -221,7 +206,7 @@ export class AdminViewComponent implements OnInit {
           time = date.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
         } catch (e) {
           console.error("時間轉換失敗:", student.lastUpdatedAt, e);
-          time = student.lastUpdatedAt.toISOString(); 
+          time = String(student.lastUpdatedAt); 
         }
       }
       const row = [
@@ -246,6 +231,3 @@ export class AdminViewComponent implements OnInit {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    }
-  }
-}
