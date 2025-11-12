@@ -200,14 +200,15 @@ export class AdminViewComponent implements OnInit {
       const remarks = student.leaveRemarks ? `"${student.leaveRemarks.replace(/"/g, '""')}"` : 'N/A';
       let time = 'N/A';
       if (student.lastUpdatedAt) {
-        try {
-          const date = new Date(student.lastUpdatedAt);
-          time = date.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
-        } catch (e) {
-          console.error("時間轉換失敗:", student.lastUpdatedAt, e);
-          time = String(student.lastUpdatedAt);
-        }
-      }
+  try {
+    const utcDate = new Date(student.lastUpdatedAt);
+    utcDate.setHours(utcDate.getHours() + 8);
+    time = utcDate.toISOString().replace('T', ' ').substring(0, 19).replace(/-/g, '/');
+  } catch (e) {
+    console.error("時間轉換失敗:", student.lastUpdatedAt, e);
+    time = String(student.lastUpdatedAt);
+  }
+}
       const row = [
         student.id,
         student.name,
