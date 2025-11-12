@@ -1,3 +1,13 @@
+getTaipeiTime(utcString: string | undefined | null): string {
+  console.log('DEBUG lastUpdatedAt', utcString, typeof utcString);
+  if (!utcString) return '';
+  try {
+    const dateObject = new Date(utcString);
+    return dateObject.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+  } catch {
+    return String(utcString);
+  }
+}
 import { Component, ChangeDetectionStrategy, output, signal, inject, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
