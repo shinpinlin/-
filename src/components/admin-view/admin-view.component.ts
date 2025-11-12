@@ -38,18 +38,16 @@ export class AdminViewComponent implements OnInit {
   ngOnInit(): void {
     this.studentService.fetchStudents();
   }
-    getTaipeiTime(utcString: string | undefined | null): string {
-    if (!utcString) return '';
-    try {
-      const utcDate = new Date(utcString);
-      // 強制台灣時間：UTC+8
-      utcDate.setHours(utcDate.getHours() + 8);
-      // 產出格式 YYYY/MM/DD HH:mm:ss
-      return utcDate.toISOString().replace('T', ' ').substring(0, 19).replace(/-/g, '/');
-    } catch {
-      return String(utcString);
-    }
+   getTaipeiTime(utcString: string | undefined | null): string {
+  if (!utcString) return '';
+  try {
+    // 不再加 8 小時了（後端已補過，只格式化顯示）
+    const date = new Date(utcString);
+    return date.toISOString().replace('T', ' ').substring(0, 19).replace(/-/g, '/');
+  } catch {
+    return String(utcString);
   }
+}
   filteredStudents = computed(() => {
     const students = this.studentService.students();
     const query = this.searchQuery().toLowerCase();
