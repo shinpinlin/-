@@ -14,13 +14,13 @@ import { LanguageService } from '../../services/language.service';
 })
 export class AdminViewComponent implements OnInit {
   logout = output<void>();
-  
-  // 篩選/搜尋相關的 Signal
+
+  // 篩選/搜尋相關 Signal
   searchQuery = signal('');
   leaveTypeFilter = signal('all'); 
   showAbsentOnly = signal(false); 
-  
-  // 模態框相關的 Signal
+
+  // 模態框相關 Signal
   showResetPasswordModal = signal(false);
   resetPasswordInput = signal('');
   passwordError = signal<string | null>(null);
@@ -44,6 +44,16 @@ export class AdminViewComponent implements OnInit {
     this.studentService.fetchStudents();
   }
 
+  // 💡 加在這裡！台灣時間轉換工具
+  getTaipeiTime(utcString: string | undefined | null): string {
+    if (!utcString) return '';
+    try {
+      return new Date(utcString).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+    } catch {
+      return utcString as string;
+    }
+  }
+
   // 篩選學生的計算屬性
   filteredStudents = computed(() => {
     const students = this.studentService.students();
@@ -57,21 +67,17 @@ export class AdminViewComponent implements OnInit {
       if (absentOnly && normalizedStatus === '出席') {
         return false;
       }
-      
-      // 修正：修正請假類型過濾 (因為後端不再儲存 '請假-' 前綴)
       if (leaveType !== 'all') {
         if (normalizedStatus !== '請假' || this.getCleanLeaveType(student.leaveType) !== leaveType) {
           return false;
         }
       }
-
       if (query && !(
         student.name.toLowerCase().includes(query) ||
         student.id.includes(query)
       )) {
         return false;
       }
-
       return true;
     });
 
@@ -82,7 +88,6 @@ export class AdminViewComponent implements OnInit {
     });
   });
 
-  // 狀態顏色樣式邏輯
   getStatusClass(status: StudentStatus): string {
     const normalizedStatus = status ? status.trim() : '';
     switch (normalizedStatus) {
@@ -97,7 +102,6 @@ export class AdminViewComponent implements OnInit {
     }
   }
 
-  // 輔助函式：取得乾淨的假別 (移除舊資料可能有的 '請假-' 前綴)
   getCleanLeaveType(leaveType: string | null | undefined): string {
     if (!leaveType) return '';
     if (leaveType.startsWith('請假-')) {
@@ -106,7 +110,6 @@ export class AdminViewComponent implements OnInit {
     return leaveType;
   }
 
-  // 動作處理函式
   toggleAbsentFilter() {
     this.showAbsentOnly.update(current => !current);
   }
@@ -120,24 +123,20 @@ export class AdminViewComponent implements OnInit {
   cancelReset() {
     this.showResetPasswordModal.set(false);
   }
-  
+
   async confirmReset(): Promise<void> {
     const password = this.resetPasswordInput();
-    
     this.passwordError.set(null);
-
     if (!password) {
       this.passwordError.set(this.languageService.translate('errors.passwordRequired'));
       return;
     }
-
     this.isResetting.set(true);
     try {
       await this.studentService.resetToInitialList(password);
       this.studentService.fetchStudents(); 
       this.showResetPasswordModal.set(false);
       this.resetPasswordInput.set(''); 
-
     } catch (error: any) {
       console.error('Failed to reset status:', error);
       let translationKey = 'errors.resetFailed'; 
@@ -148,9 +147,8 @@ export class AdminViewComponent implements OnInit {
     } finally {
       this.isResetting.set(false);
     }
-  }  
-  
-  // 刪除確認邏輯
+  }
+
   openDeleteConfirm(student: Student) {
     this.studentToDelete.set(student);
     this.deletePasswordInput.set('');
@@ -166,13 +164,11 @@ export class AdminViewComponent implements OnInit {
   async confirmDelete(): Promise<void> {
     const student = this.studentToDelete();
     if (!student) return;
-    
     if (this.deletePasswordInput() !== this.ADMIN_DELETE_PASSWORD) {
       this.deletePasswordError.set(this.languageService.translate('errors.passwordIncorrect'));
       this.deletePasswordInput.set('');
       return;
     }
-
     this.isDeleting.set(true);
     this.deletePasswordError.set(null);
     try {
@@ -185,23 +181,16 @@ export class AdminViewComponent implements OnInit {
       this.isDeleting.set(false);
     }
   }
-  
-  // 匯出功能 (修正時區)
+
   exportAbsentList() {
     console.log("Exporting list...");
-    
-    // 1. 取得篩選後的學生 (或所有非出席學生)
-    // 這裡我們匯出所有 "非出席" 的學生
     const studentsToExport = this.studentService.students().filter(
       s => s.status !== '出席'
     );
-
     if (studentsToExport.length === 0) {
       console.warn("沒有可匯出的缺席/請假紀錄");
       return;
     }
-
-    // 2. CSV 標頭
     const headers = [
       "學號", 
       "姓名", 
@@ -210,29 +199,21 @@ export class AdminViewComponent implements OnInit {
       "備註", 
       "最後更新時間 (台北時間)"
     ];
-    
-    // 3. 建立 CSV 內容
-    const csvRows = [headers.join(',')]; // 加入標頭
-
+    const csvRows = [headers.join(',')];
     for (const student of studentsToExport) {
       const status = this.languageService.translate(`statuses.${student.status}`);
       const leaveType = student.leaveType ? this.languageService.translate(`leaveTypes.${this.getCleanLeaveType(student.leaveType)}`) : 'N/A';
       const remarks = student.leaveRemarks ? `"${student.leaveRemarks.replace(/"/g, '""')}"` : 'N/A';
-      
-      // 修正：將 UTC 時間轉換為台北時間 (UTC+8)
       let time = 'N/A';
       if (student.lastUpdatedAt) {
         try {
-          // 傳入 ISO 字串 (例如 "2025-11-08T08:00:00+00:00")
           const date = new Date(student.lastUpdatedAt);
-          // 轉換為台北時區的本地化字串
           time = date.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
         } catch (e) {
           console.error("時間轉換失敗:", student.lastUpdatedAt, e);
           time = student.lastUpdatedAt.toISOString(); 
-}
+        }
       }
-
       const row = [
         student.id,
         student.name,
@@ -241,17 +222,11 @@ export class AdminViewComponent implements OnInit {
         remarks,
         time
       ].join(',');
-      
       csvRows.push(row);
     }
-
-    // 4. 建立並下載檔案
     const csvContent = csvRows.join('\n');
-    
-    // 修正：加入 BOM (Byte Order Mark) 確保 Excel 能正確讀取 UTF-8 中文
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-    
     const link = document.createElement("a");
     if (link.download !== undefined) { 
       const url = URL.createObjectURL(blob);
