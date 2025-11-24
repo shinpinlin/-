@@ -213,20 +213,32 @@ export class AdminViewComponent implements OnInit {
       "最後更新時間 (台北時間)"
     ];
     const csvRows = [headers.join(',')];
+    
     for (const student of studentsToExport) {
       const status = this.languageService.translate(`statuses.${student.status}`);
       const leaveType = student.leaveType ? this.languageService.translate(`leaveTypes.${this.getCleanLeaveType(student.leaveType)}`) : 'N/A';
       const remarks = student.leaveRemarks ? `"${student.leaveRemarks.replace(/"/g, '""')}"` : 'N/A';
       
-      // 匯出也使用正確的台灣時間邏輯
       let time = 'N/A';
+      
+      // ✅ 修正這裡：匯出時也手動 +8 小時
       if (student.lastUpdatedAt) {
         try {
             const date = new Date(student.lastUpdatedAt);
-            time = date.toLocaleString('zh-TW', {
-              year: 'numeric', month: '2-digit', day: '2-digit',
-              hour: '2-digit', minute: '2-digit', second: '2-digit',
-              hour12: false, timeZone: 'Asia/Taipei'
+            const originalTime = date.getTime();
+            // 直接加上 8 小時 (8 * 60 * 60 * 1000)
+            const newTime = originalTime + (8 * 60 * 60 * 1000);
+            const newDate = new Date(newTime);
+
+            // 格式化為 YYYY/MM/DD HH:mm:ss
+            time = newDate.toLocaleString('zh-TW', {
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false
             });
         } catch (e) {
             console.error("時間轉換失敗:", student.lastUpdatedAt, e);
@@ -234,6 +246,32 @@ export class AdminViewComponent implements OnInit {
         }
       }
 
+      const row = [
+        student.id,
+        student.name,
+        status,
+        leaveType,
+        remarks,
+        time
+      ].join(',');
+      csvRows.push(row);
+    }
+    
+    // ... (後面產生 Blob 下載的程式碼保持不變) ...
+    const csvContent = csvRows.join('\n');
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "rollcall_export.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
       const row = [
         student.id,
         student.name,
