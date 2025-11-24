@@ -73,40 +73,35 @@ export class StudentViewComponent {
     });
   }
 
-  // ✅ 強力修正版：強制將時間視為 UTC 並轉為台灣時間
+// ✅ 暴力修正：不管時區設定，直接手動加 8 小時
   getTaipeiTime(utcString: string | undefined | null): string {
     if (!utcString) return '';
     try {
-      let safeString = String(utcString).trim();
+      const date = new Date(utcString);
+      
+      // 1. 取得原始時間的毫秒數
+      const originalTime = date.getTime();
+      
+      // 2. 直接加上 8 小時的毫秒數 (8小時 * 60分 * 60秒 * 1000毫秒)
+      // 如果您發現變成了「多 8 小時」，請把這裡的 '+' 改成 '-'
+      const newTime = originalTime + (8 * 60 * 60 * 1000);
+      
+      const newDate = new Date(newTime);
 
-      // 如果格式是 "YYYY-MM-DD HH:mm:ss" (中間有空白)，把空白改成 'T'
-      if (safeString.includes(' ') && !safeString.includes('T')) {
-        safeString = safeString.replace(' ', 'T');
-      }
-
-      // 如果沒有 Z 也沒有時區偏移，強制補上 Z (視為 UTC)
-      if (!safeString.endsWith('Z') && !safeString.includes('+') && !safeString.includes('-')) {
-        safeString += 'Z';
-      }
-
-      const date = new Date(safeString);
-
-      return date.toLocaleString('zh-TW', {
+      // 3. 輸出格式 (不指定 timeZone，直接印出運算後的結果)
+      return newDate.toLocaleString('zh-TW', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Taipei'
+        hour12: false
       });
     } catch (e) {
-      console.error('Time conversion error:', e);
       return String(utcString);
     }
   }
-
   // ✅ 這是原本報錯的 async submitLeave，現在位置正確了
   async submitLeave() {
     const user = this.currentUser();
