@@ -38,12 +38,8 @@ export class AdminViewComponent implements OnInit {
   ngOnInit(): void {
     this.studentService.fetchStudents();
   }
-   // ... 前面的程式碼 ...
-  ngOnInit(): void {
-    this.studentService.fetchStudents();
-  }
 
-  // 👇👇👇 這裡就是要修改的地方 (原本是 41-50 行) 👇👇👇
+  // ✅ 修正後的時間顯示函式 (台灣時間)
   getTaipeiTime(utcString: string | undefined | null): string {
     if (!utcString) return '';
     try {
@@ -62,10 +58,7 @@ export class AdminViewComponent implements OnInit {
       return String(utcString);
     }
   }
-  // 👆👆👆 修改結束 👆👆👆
 
-  filteredStudents = computed(() => {
-// ... 後面的程式碼 ...
   filteredStudents = computed(() => {
     const students = this.studentService.students();
     const query = this.searchQuery().toLowerCase();
@@ -214,17 +207,23 @@ export class AdminViewComponent implements OnInit {
       const status = this.languageService.translate(`statuses.${student.status}`);
       const leaveType = student.leaveType ? this.languageService.translate(`leaveTypes.${this.getCleanLeaveType(student.leaveType)}`) : 'N/A';
       const remarks = student.leaveRemarks ? `"${student.leaveRemarks.replace(/"/g, '""')}"` : 'N/A';
+      
+      // 匯出也使用正確的台灣時間邏輯
       let time = 'N/A';
       if (student.lastUpdatedAt) {
-  try {
-    const utcDate = new Date(student.lastUpdatedAt);
-    utcDate.setHours(utcDate.getHours() + 8);
-    time = utcDate.toISOString().replace('T', ' ').substring(0, 19).replace(/-/g, '/');
-  } catch (e) {
-    console.error("時間轉換失敗:", student.lastUpdatedAt, e);
-    time = String(student.lastUpdatedAt);
-  }
-}
+        try {
+            const date = new Date(student.lastUpdatedAt);
+            time = date.toLocaleString('zh-TW', {
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', second: '2-digit',
+              hour12: false, timeZone: 'Asia/Taipei'
+            });
+        } catch (e) {
+            console.error("時間轉換失敗:", student.lastUpdatedAt, e);
+            time = String(student.lastUpdatedAt);
+        }
+      }
+
       const row = [
         student.id,
         student.name,
