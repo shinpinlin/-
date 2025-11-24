@@ -40,10 +40,26 @@ export class AdminViewComponent implements OnInit {
   }
 
   // ✅ 修正後的時間顯示函式 (台灣時間)
-  getTaipeiTime(utcString: string | undefined | null): string {
+ getTaipeiTime(utcString: string | undefined | null): string {
     if (!utcString) return '';
     try {
-      const date = new Date(utcString);
+      // 步驟 1: 確保是字串並去除前後空白
+      let safeString = String(utcString).trim();
+
+      // 步驟 2: 如果格式是 "YYYY-MM-DD HH:mm:ss" (中間有空白)，把空白改成 'T' 以符合 ISO 標準
+      if (safeString.includes(' ') && !safeString.includes('T')) {
+        safeString = safeString.replace(' ', 'T');
+      }
+
+      // 步驟 3: 【關鍵修正】如果字串結尾沒有 'Z' 也沒有時區偏移 (如 +08:00)，就強制加上 'Z'
+      // 這會強制瀏覽器把這個時間當作 UTC 時間處理 (即 +0 時區)
+      if (!safeString.endsWith('Z') && !safeString.includes('+') && !safeString.includes('-')) {
+        safeString += 'Z';
+      }
+
+      const date = new Date(safeString);
+
+      // 步驟 4: 轉換成台灣時間顯示
       return date.toLocaleString('zh-TW', {
         year: 'numeric',
         month: '2-digit',
@@ -54,7 +70,8 @@ export class AdminViewComponent implements OnInit {
         hour12: false,
         timeZone: 'Asia/Taipei'
       });
-    } catch {
+    } catch (e) {
+      console.error('時間轉換錯誤:', e);
       return String(utcString);
     }
   }
