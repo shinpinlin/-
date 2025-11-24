@@ -39,13 +39,13 @@ export class AdminViewComponent implements OnInit {
     this.studentService.fetchStudents();
   }
 
-  // ✅ 暴力修正：網頁顯示專用 (手動 +8 小時)
+  // ✅ 強力修正版：網頁顯示專用 (手動 +8 小時)
   getTaipeiTime(utcString: string | undefined | null): string {
     if (!utcString) return '';
     try {
       const date = new Date(utcString);
       const originalTime = date.getTime();
-      // 加 8 小時
+      // 直接加上 8 小時 (8小時 * 60分 * 60秒 * 1000毫秒)
       const newTime = originalTime + (8 * 60 * 60 * 1000);
       const newDate = new Date(newTime);
 
@@ -146,4 +146,123 @@ export class AdminViewComponent implements OnInit {
       this.resetPasswordInput.set('');
     } catch (error: any) {
       console.error('Failed to reset status:', error);
-      let translationKey
+      let translationKey = 'errors.resetFailed';
+      if (error && error.error && typeof error.error.error === 'string') {
+        translationKey = error.error.error;
+      }
+      this.passwordError.set(this.languageService.translate(translationKey));
+    } finally {
+      this.isResetting.set(false);
+    }
+  }
+
+  openDeleteConfirm(student: Student) {
+    this.studentToDelete.set(student);
+    this.deletePasswordInput.set('');
+    this.deletePasswordError.set(null);
+    this.showDeleteConfirmModal.set(true);
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirmModal.set(false);
+    this.studentToDelete.set(null);
+  }
+
+  async confirmDelete(): Promise<void> {
+    const student = this.studentToDelete();
+    if (!student) return;
+    if (this.deletePasswordInput() !== this.ADMIN_DELETE_PASSWORD) {
+      this.deletePasswordError.set(this.languageService.translate('errors.passwordIncorrect'));
+      this.deletePasswordInput.set('');
+      return;
+    }
+    this.isDeleting.set(true);
+    this.deletePasswordError.set(null);
+    try {
+      await this.studentService.deleteStudent(student.id);
+      this.cancelDelete();
+    } catch (error) {
+      console.error('Failed to delete student', error);
+      console.error(this.languageService.translate('errors.deleteFailed'));
+    } finally {
+      this.isDeleting.set(false);
+    }
+  }
+
+  // ✅ 這是您原本報錯找不到的函式，現在位置正確了
+  exportAbsentList() {
+    console.log("Exporting list...");
+    const studentsToExport = this.studentService.students().filter(
+      s => s.status !== '出席'
+    );
+    if (studentsToExport.length === 0) {
+      console.warn("沒有可匯出的缺席/請假紀錄");
+      return;
+    }
+    const headers = [
+      "學號",
+      "姓名",
+      "狀態",
+      "假別",
+      "備註",
+      "最後更新時間 (台北時間)"
+    ];
+    const csvRows = [headers.join(',')];
+
+    for (const student of studentsToExport) {
+      const status = this.languageService.translate(`statuses.${student.status}`);
+      const leaveType = student.leaveType ? this.languageService.translate(`leaveTypes.${this.getCleanLeaveType(student.leaveType)}`) : 'N/A';
+      const remarks = student.leaveRemarks ? `"${student.leaveRemarks.replace(/"/g, '""')}"` : 'N/A';
+      
+      let time = 'N/A';
+      
+      // ✅ 匯出專用的暴力修正 (+8小時)
+      if (student.lastUpdatedAt) {
+        try {
+            const date = new Date(student.lastUpdatedAt);
+            const originalTime = date.getTime();
+            const newTime = originalTime + (8 * 60 * 60 * 1000);
+            const newDate = new Date(newTime);
+
+            time = newDate.toLocaleString('zh-TW', {
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false
+            });
+        } catch (e) {
+            console.error("時間轉換失敗:", student.lastUpdatedAt, e);
+            time = String(student.lastUpdatedAt);
+        }
+      }
+
+      const row = [
+        student.id,
+        student.name,
+        status,
+        leaveType,
+        remarks,
+        time
+      ].join(',');
+      
+      csvRows.push(row);
+    }
+
+    const csvContent = csvRows.join('\n');
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "rollcall_export.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+}
