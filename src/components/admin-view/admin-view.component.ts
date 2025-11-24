@@ -38,16 +38,34 @@ export class AdminViewComponent implements OnInit {
   ngOnInit(): void {
     this.studentService.fetchStudents();
   }
-   getTaipeiTime(utcString: string | undefined | null): string {
-  if (!utcString) return '';
-  try {
-    // 不再加 8 小時了（後端已補過，只格式化顯示）
-    const date = new Date(utcString);
-    return date.toISOString().replace('T', ' ').substring(0, 19).replace(/-/g, '/');
-  } catch {
-    return String(utcString);
+   // ... 前面的程式碼 ...
+  ngOnInit(): void {
+    this.studentService.fetchStudents();
   }
-}
+
+  // 👇👇👇 這裡就是要修改的地方 (原本是 41-50 行) 👇👇👇
+  getTaipeiTime(utcString: string | undefined | null): string {
+    if (!utcString) return '';
+    try {
+      const date = new Date(utcString);
+      return date.toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Taipei'
+      });
+    } catch {
+      return String(utcString);
+    }
+  }
+  // 👆👆👆 修改結束 👆👆👆
+
+  filteredStudents = computed(() => {
+// ... 後面的程式碼 ...
   filteredStudents = computed(() => {
     const students = this.studentService.students();
     const query = this.searchQuery().toLowerCase();
