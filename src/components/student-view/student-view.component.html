@@ -9,10 +9,14 @@
       </button>
     </div>
 
-    <div class="text-center">
+ <div class="text-center">
       <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{{ languageService.translate('student.welcome', { name: user.name }) }}</h1>
       <p class="mt-2 text-lg text-indigo-600 dark:text-indigo-400 font-semibold">{{ currentStatus() }}</p>
-    </div>
+      
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        最後更新: {{ getTaipeiTime(user.lastUpdatedAt) }}
+      </p>
+      </div>
 
     <!-- 🚀 最終修正邏輯：只要狀態不是 '缺席' (即出席或請假)，就顯示申請區塊 -->
     @if (!leaveSubmitted() && user.status !== '缺席') { 

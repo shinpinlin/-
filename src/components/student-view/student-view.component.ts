@@ -78,7 +78,30 @@ export class StudentViewComponent {
     });
   }
 
-  async submitLeave() {
+// 👇👇👇 請將這段程式碼貼入 student-view.component.ts 類別中 👇👇👇  
+  getTaipeiTime(utcString: string | undefined | null): string {
+    if (!utcString) return '';
+    try {
+      const date = new Date(utcString);
+      return date.toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Taipei'
+      });
+    } catch {
+      return String(utcString);
+    }
+  }
+
+  // 👆👆👆 貼上結束 👆👆👆
+  async submitLeave() {
+    // ... 原有的程式碼 ...  
+async submitLeave() {
     const user = this.currentUser();
     if (!user) return;
     
