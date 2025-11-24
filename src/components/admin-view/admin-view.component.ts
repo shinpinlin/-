@@ -39,23 +39,18 @@ export class AdminViewComponent implements OnInit {
     this.studentService.fetchStudents();
   }
 
-  // ✅ 修正後的時間顯示函式 (台灣時間)
- // ✅ 暴力修正：不管時區設定，直接手動加 8 小時
+  // ✅ 暴力修正：不管時區設定，網頁顯示直接手動加 8 小時
   getTaipeiTime(utcString: string | undefined | null): string {
     if (!utcString) return '';
     try {
       const date = new Date(utcString);
-      
       // 1. 取得原始時間的毫秒數
       const originalTime = date.getTime();
-      
-      // 2. 直接加上 8 小時的毫秒數 (8小時 * 60分 * 60秒 * 1000毫秒)
-      // 如果您發現變成了「多 8 小時」，請把這裡的 '+' 改成 '-'
+      // 2. 直接加上 8 小時 (8小時 * 60分 * 60秒 * 1000毫秒)
       const newTime = originalTime + (8 * 60 * 60 * 1000);
-      
       const newDate = new Date(newTime);
 
-      // 3. 輸出格式 (不指定 timeZone，直接印出運算後的結果)
+      // 3. 輸出格式
       return newDate.toLocaleString('zh-TW', {
         year: 'numeric',
         month: '2-digit',
@@ -69,6 +64,7 @@ export class AdminViewComponent implements OnInit {
       return String(utcString);
     }
   }
+
   filteredStudents = computed(() => {
     const students = this.studentService.students();
     const query = this.searchQuery().toLowerCase();
@@ -213,7 +209,7 @@ export class AdminViewComponent implements OnInit {
       "最後更新時間 (台北時間)"
     ];
     const csvRows = [headers.join(',')];
-    
+
     for (const student of studentsToExport) {
       const status = this.languageService.translate(`statuses.${student.status}`);
       const leaveType = student.leaveType ? this.languageService.translate(`leaveTypes.${this.getCleanLeaveType(student.leaveType)}`) : 'N/A';
@@ -221,23 +217,17 @@ export class AdminViewComponent implements OnInit {
       
       let time = 'N/A';
       
-      // ✅ 修正這裡：匯出時也手動 +8 小時
+      // ✅ 暴力修正：匯出時也手動 +8 小時
       if (student.lastUpdatedAt) {
         try {
             const date = new Date(student.lastUpdatedAt);
             const originalTime = date.getTime();
-            // 直接加上 8 小時 (8 * 60 * 60 * 1000)
-            const newTime = originalTime + (8 * 60 * 60 * 1000);
+            const newTime = originalTime + (8 * 60 * 60 * 1000); // +8小時
             const newDate = new Date(newTime);
 
-            // 格式化為 YYYY/MM/DD HH:mm:ss
             time = newDate.toLocaleString('zh-TW', {
-                year: 'numeric', 
-                month: '2-digit', 
-                day: '2-digit',
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
                 hour12: false
             });
         } catch (e) {
@@ -254,34 +244,10 @@ export class AdminViewComponent implements OnInit {
         remarks,
         time
       ].join(',');
+      
       csvRows.push(row);
     }
-    
-    // ... (後面產生 Blob 下載的程式碼保持不變) ...
-    const csvContent = csvRows.join('\n');
-    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-    const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", "rollcall_export.csv");
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }
-      const row = [
-        student.id,
-        student.name,
-        status,
-        leaveType,
-        remarks,
-        time
-      ].join(',');
-      csvRows.push(row);
-    }
+
     const csvContent = csvRows.join('\n');
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
