@@ -60,9 +60,19 @@
             </span>
           }
         </div>
+        
         <div class="flex items-center space-x-3 flex-wrap gap-2">
-            <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">{{ languageService.translate('admin.resetStatus') }}</button>
-            <button (click)="exportAbsentList()" class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">{{ languageService.translate('admin.exportAbsentList') }}</button>
+            <button (click)="openResetModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+              {{ languageService.translate('admin.resetStatus') }}
+            </button>
+            
+            <button (click)="exportGeneralLeave()" class="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+              匯出請假名單
+            </button>
+
+            <button (click)="exportDormReport()" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
+              匯出查鋪報表
+            </button>
         </div>
       </div>
     </div>
@@ -106,7 +116,7 @@
               <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.name') }}</th>
               <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.status') }}</th>
               <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.leaveType') }}</th>
-              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.remarks') }}</th>
+              <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.remarks') }} / 內容</th>
               <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.lastUpdated') }}</th>
               <th scope="col" class="px-6 py-3 text-center">{{ languageService.translate('admin.actions') }}</th>
             </tr>
@@ -126,7 +136,11 @@
                   </span>
                 </td>
                 <td class="px-6 py-4">{{ student.leaveType ? languageService.translate('leaveTypes.' + getCleanLeaveType(student.leaveType)) : '無' }}</td>
-                <td class="px-6 py-4">{{ student.leaveRemarks || '無' }}</td>
+                
+                <td class="px-6 py-4 max-w-xs truncate" [title]="student.leaveRemarks">
+                    {{ student.leaveRemarks || '無' }}
+                </td>
+
                 <td class="px-6 py-4 whitespace-nowrap">
                   {{ getTaipeiTime(student.lastUpdatedAt) }}
                 </td>
