@@ -9,34 +9,41 @@
       </button>
     </div>
 
- <div class="text-center">
+    <div class="text-center">
       <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{{ languageService.translate('student.welcome', { name: user.name }) }}</h1>
       <p class="mt-2 text-lg text-indigo-600 dark:text-indigo-400 font-semibold">{{ currentStatus() }}</p>
       
       <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
         最後更新: {{ getTaipeiTime(user.lastUpdatedAt) }}
       </p>
-      </div>
 
-    <!-- 🚀 最終修正邏輯：只要狀態不是 '缺席' (即出席或請假)，就顯示申請區塊 -->
+      @if (studentService.isBedtime()) {
+        <div class="mt-2 px-4 py-1 bg-blue-100 text-blue-800 rounded-full inline-block text-sm font-bold">
+          🌙 就寢時間 (23:00 - 06:00)
+        </div>
+      }
+    </div>
+
     @if (!leaveSubmitted() && user.status !== '缺席') { 
       <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
         @if (!showLeaveForm()) {
-          <!-- 「申請請假」按鈕 -->
-          <div class="text-center">
-            <button (click)="showLeaveForm.set(true)" class="px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-75 transition-transform transform hover:scale-105">
+          <div class="flex flex-col gap-3 items-center">
+            <button (click)="showLeaveForm.set(true)" class="w-full sm:w-auto px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 focus:outline-none transition-transform transform hover:scale-105">
               {{ languageService.translate('student.askForLeave') }}
+            </button>
+
+            <button (click)="openDormModal()" class="w-full sm:w-auto px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none transition-transform transform hover:scale-105">
+              🛏️ 寢室長查鋪回報
             </button>
           </div>
         } @else {
-          <!-- 請假表單 -->
           <div>
             <h2 class="text-xl font-semibold text-center text-gray-700 dark:text-gray-200 mb-4">{{ languageService.translate('student.leaveApplication') }}</h2>
             <form (ngSubmit)="submitLeave()" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ languageService.translate('student.leaveType') }}</label>
                 <div class="grid grid-cols-2 gap-4">
-                  @for (type of leaveTypes; track type) {
+                  @for (type of currentLeaveTypes(); track type) {
                     <button 
                       type="button"
                       (click)="leaveType.set(type)"
@@ -45,7 +52,7 @@
                         ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
                         : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'"
                     >
-                      {{ languageService.translate('leaveTypes.' + type) }}
+                      {{ type === 'K書中心' ? 'K書中心' : (type === '文康室' ? '文康室' : languageService.translate('leaveTypes.' + type)) }}
                     </button>
                   }
                 </div>
@@ -54,24 +61,22 @@
               @if (leaveType() === '其他') {
                 <div>
                   <label for="remarks" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {{ languageService.translate('student.remarks') }} <span class="text-red-500">({{ languageService.translate('student.remarksRequired') }})</span>
+                    {{ languageService.translate('student.remarks') }} 
+                    <span class="text-red-500">({{ languageService.translate('student.remarksRequired') }})</span>
                   </label>
-                  <textarea id="remarks" name="remarks" rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" [placeholder]="languageService.translate('student.remarksPlaceholder')" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                  <textarea id="remarks" name="remarks" rows="3" [ngModel]="remarks()" (ngModelChange)="remarks.set($event)" placeholder="請輸入說明..." class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                 </div>
               }
 
-              <div class="flex justify-end pt-2">
+              <div class="flex justify-end pt-2 space-x-3">
+                <button type="button" (click)="showLeaveForm.set(false)" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">{{ languageService.translate('common.cancel') }}</button>
                 <button 
                   type="submit" 
                   [disabled]="isSubmitting()"
-                  class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition disabled:bg-indigo-400 disabled:cursor-not-allowed"
+                  class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none transition disabled:bg-indigo-400 disabled:cursor-not-allowed"
                 >
                   @if(isSubmitting()) {
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>{{ languageService.translate('student.submitting') }}</span>
+                    <span>...</span>
                   } @else {
                     <span>{{ languageService.translate('student.submit') }}</span>
                   }
@@ -82,7 +87,6 @@
         }
       </div> 
     } @else {
-      <!-- 狀態不是出席或請假 (即缺席或已成功提交) 時的顯示 -->
       <div class="text-center p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
         <p class="text-lg font-medium text-yellow-700 dark:text-yellow-300">
           {{ currentStatus() }}
@@ -90,8 +94,75 @@
       </div>
     } 
   </div>
+
+  @if (showDormCheckModal()) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="showDormCheckModal.set(false)">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4" (click)="$event.stopPropagation()">
+        <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">🛏️ 寢室長查鋪回報</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">寢室號碼</label>
+            <input type="text" [ngModel]="dormRoomNumber()" (ngModelChange)="dormRoomNumber.set($event)" placeholder="例如: 305" class="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white">
+          </div>
+
+          <div class="flex space-x-4 mt-2">
+            <button type="button" 
+              (click)="dormCheckOption.set('checked')"
+              [class]="dormCheckOption() === 'checked' ? 'bg-green-600 text-white ring-2 ring-green-400' : 'bg-gray-200 text-gray-700'"
+              class="flex-1 py-2 rounded-md font-medium transition">
+              ✅ 宿舍區查鋪完成
+            </button>
+            <button type="button" 
+              (click)="dormCheckOption.set('missing')"
+              [class]="dormCheckOption() === 'missing' ? 'bg-red-600 text-white ring-2 ring-red-400' : 'bg-gray-200 text-gray-700'"
+              class="flex-1 py-2 rounded-md font-medium transition">
+              ❌ 不在宿舍區
+            </button>
+          </div>
+
+          @if (dormCheckOption() === 'missing') {
+            <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-md space-y-3 border border-red-200 dark:border-red-800">
+              <h4 class="text-sm font-bold text-red-800 dark:text-red-300">填寫缺席者資料</h4>
+              
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">缺席學號</label>
+                <input type="text" [ngModel]="missingStudentId()" (ngModelChange)="missingStudentId.set($event)" class="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+              
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">事由</label>
+                <input type="text" [ngModel]="missingReason()" (ngModelChange)="missingReason.set($event)" placeholder="例如: 買宵夜" class="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">預計返回時間</label>
+                <input type="text" [ngModel]="missingReturnTime()" (ngModelChange)="missingReturnTime.set($event)" placeholder="例如: 00:30" class="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+            </div>
+          }
+
+          @if(dormMessage()) {
+            <div class="p-3 bg-blue-50 text-blue-700 rounded-md text-sm font-bold">
+              {{ dormMessage() }}
+            </div>
+          }
+
+          <div class="flex justify-end space-x-3 mt-6">
+            <button (click)="showDormCheckModal.set(false)" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">取消</button>
+            <button 
+              (click)="submitDormCheck()" 
+              [disabled]="isDormSubmitting()"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
+              {{ isDormSubmitting() ? '處理中...' : '送出回報' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
 } @else {
-  <!-- This will be shown briefly if the user is deleted before logout completes -->
   <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
     <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{{ languageService.translate('student.loggingOut') }}</h1>

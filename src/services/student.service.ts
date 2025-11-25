@@ -1,10 +1,10 @@
 import { Injectable, signal, computed, effect, PLATFORM_ID, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { Student, StudentStatus, LeaveType } from '../models/student.model';
+import { Student, LeaveType } from '../models/student.model';
 import { firstValueFrom, map } from 'rxjs';
 
-// <====== 這是標準資料格式（完全正確 TypeScript Array of Objects）======
+// ⚠️ 完整保留原本的名單
 const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1123003', name: '謝昀臻' },
   { id: '1123025', name: '陳靖' },
@@ -44,7 +44,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1133033', name: '葉冠愷' },
   { id: '1133035', name: '李柏諠' },
   { id: '1133036', name: '翁達翰' },
-  { id: '1133037', name: '高爾義' },
+  { id: '1133037', name: '9高爾義' },
   { id: '1133038', name: '高睿宏' },
   { id: '1133044', name: '吳育鑫' },
   { id: '1133048', name: '鄭偉民' },
@@ -106,10 +106,10 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1143131', name: '吳曉天' },
   { id: '1143132', name: '楊佳玲' },
   { id: '1143133', name: '李珮安' }
-];// 
+];
+
 const LOCAL_STORAGE_KEY = 'studentAttendanceApp_students';
 
-// <===== 以下為核心服務邏輯 =====>
 @Injectable({
   providedIn: 'root',
 })
@@ -121,14 +121,17 @@ export class StudentService {
   private http = inject(HttpClient);
 
   private readonly _isEvening = signal(false);
+  private readonly _isBedtime = signal(false); 
   private readonly _countdown = signal('');
   private isInitialEffectRun = true;
   private countdownInterval?: number;
+  private lastResetDate = '';
 
   public readonly masterRoster = MASTER_ROSTER;
 
   public students = this._students.asReadonly();
   public isEvening = this._isEvening.asReadonly();
+  public isBedtime = this._isBedtime.asReadonly(); 
   public countdown = this._countdown.asReadonly();
 
   public totalStudents = computed(() => this._students().length);
@@ -136,7 +139,6 @@ export class StudentService {
   public absentStudents = computed(() => this._students().filter(s => s.status !== '出席').length);
 
   constructor() {
-    // 清除有 Date 物件殘留的本地資料（第一次部署建議先清掉一次）
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
@@ -150,13 +152,13 @@ export class StudentService {
 
     effect(() => {
       this.isEvening();
+      this.isBedtime();
 
       if (this.isInitialEffectRun) {
         this.isInitialEffectRun = false;
         this.fetchStudents();
         return;
       }
-      this.resetToInitialList();
     });
 
     if (isPlatformBrowser(this.platformId)) {
@@ -165,17 +167,12 @@ export class StudentService {
     }
   }
 
-  // ***************************************************************
-  // 狀態管理
-  // ***************************************************************
-
   public async fetchStudents(): Promise<void> {
     try {
       const studentsData = await firstValueFrom(
         this.http.get<Student[]>(`${this.API_BASE_URL}/students`).pipe(
           map(students => students.map(student => ({
             ...student,
-            // 只存字串
             lastUpdatedAt: typeof student.lastUpdatedAt === 'string' ? student.lastUpdatedAt : null
           })))
         )
@@ -200,7 +197,7 @@ export class StudentService {
           return;
         }
       } catch (e) {
-        console.error('Failed to load or parse state from localStorage', e);
+        console.error('Failed to load state', e);
       }
     }
     this.setInitialList();
@@ -211,7 +208,7 @@ export class StudentService {
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(students));
       } catch (e) {
-        console.error('Failed to save state to localStorage', e);
+        console.error('Failed to save state', e);
       }
     }
   }
@@ -226,47 +223,74 @@ export class StudentService {
     this._students.set(initialStudents);
   }
 
+  // ✅ 暴力修正版的時間更新邏輯
   private updateCountdown(): void {
+    // 1. 取得目前系統的 UTC 時間
     const now = new Date();
-    const str = now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' });
-    const nowInTaipei = new Date(str);
+    
+    // 2. 暴力加 8 小時，模擬成「台灣時間的 Date 物件」
+    // 注意：這樣做之後，此物件的 getUTCHours() 就會變成「台灣時間的小時」
+    const taiwanTimeMs = now.getTime() + (8 * 60 * 60 * 1000);
+    const taiwanDate = new Date(taiwanTimeMs);
 
-    const morningCutoff = new Date(nowInTaipei);
-    morningCutoff.setHours(9, 30, 0, 0);
-    const eveningCutoff = new Date(nowInTaipei);
-    eveningCutoff.setHours(21, 30, 0, 0);
+    // 3. 讀取時間 (使用 UTC 方法讀取，因為我們已經把時間偏移過了)
+    // 這裡的 currentHour 就是台灣時間的小時 (0-23)
+    const currentHour = taiwanDate.getUTCHours();
+    const currentMinute = taiwanDate.getUTCMinutes();
+    const currentSecond = taiwanDate.getUTCSeconds();
+    const todayStr = taiwanDate.toISOString().split('T')[0]; // 取得 YYYY-MM-DD
 
-    let isCurrentlyEvening: boolean;
-    let nextTransitionTime: Date;
-
-    if (nowInTaipei >= morningCutoff && nowInTaipei < eveningCutoff) {
-      isCurrentlyEvening = true;
-      nextTransitionTime = eveningCutoff;
-    } else {
-      isCurrentlyEvening = false;
-      if (nowInTaipei < morningCutoff) {
-        nextTransitionTime = morningCutoff;
-      } else {
-        nextTransitionTime = new Date(nowInTaipei);
-        nextTransitionTime.setDate(nextTransitionTime.getDate() + 1);
-        nextTransitionTime.setHours(9, 30, 0, 0);
-      }
+    // ✅ 自動重置邏輯 (07:00)
+    if (currentHour === 7 && this.lastResetDate !== todayStr) {
+        console.log('Triggering 07:00 Auto Reset...');
+        this.resetToInitialList(); 
+        this.lastResetDate = todayStr;
     }
+
+    // ✅ 就寢時間判斷 (23:00 - 06:00)
+    const isBedtimeNow = currentHour >= 23 || currentHour < 6;
+    this._isBedtime.set(isBedtimeNow);
+
+    // --- 早晚點名倒數邏輯 ---
+    // 因為我們現在用的是 "偽造的台灣時間"，所以邏輯稍微不同
+    // 我們直接比較 "當前的總秒數" 和 "目標的總秒數"
+    
+    const currentTotalSeconds = (currentHour * 3600) + (currentMinute * 60) + currentSecond;
+    const morningCutoffSeconds = (9 * 3600) + (30 * 60); // 09:30
+    const eveningCutoffSeconds = (21 * 3600) + (30 * 60); // 21:30
+
+    let isCurrentlyEvening = false;
+    let secondsUntilNext = 0;
+
+    // 09:30 ~ 21:30 (晚點名倒數時段)
+    if (currentTotalSeconds >= morningCutoffSeconds && currentTotalSeconds < eveningCutoffSeconds) {
+        isCurrentlyEvening = true;
+        secondsUntilNext = eveningCutoffSeconds - currentTotalSeconds;
+    } 
+    // 其他時間 (早點名倒數時段)
+    else {
+        isCurrentlyEvening = false;
+        if (currentTotalSeconds < morningCutoffSeconds) {
+            // 還沒到早上 09:30
+            secondsUntilNext = morningCutoffSeconds - currentTotalSeconds;
+        } else {
+            // 已經過了晚上 21:30，要算到明天早上 09:30
+            // 剩餘秒數 = (今天剩下的秒數) + (明天早上的秒數)
+            secondsUntilNext = (24 * 3600 - currentTotalSeconds) + morningCutoffSeconds;
+        }
+    }
+
     this._isEvening.set(isCurrentlyEvening);
 
-    const timeDifference = nextTransitionTime.getTime() - nowInTaipei.getTime();
-    const hours = Math.max(0, Math.floor(timeDifference / (1000 * 60 * 60)));
-    const minutes = Math.max(0, Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60)));
-    const seconds = Math.max(0, Math.floor((timeDifference % (1000 * 60)) / 1000));
+    // 格式化倒數時間
+    const h = Math.floor(secondsUntilNext / 3600);
+    const m = Math.floor((secondsUntilNext % 3600) / 60);
+    const s = secondsUntilNext % 60;
     const formattedCountdown =
-      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
     this._countdown.set(formattedCountdown);
   }
-
-  // ***************************************************************
-  // 核心操作
-  // ***************************************************************
 
   public async login(studentId: string): Promise<Student> {
     const loggedInStudent = await firstValueFrom(
@@ -294,8 +318,11 @@ export class StudentService {
 
   public async resetToInitialList(adminPassword?: string): Promise<void> {
     const body = { password: adminPassword };
-    await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/admin/reset`, body));
-    this.fetchStudents();
+    try {
+        await firstValueFrom(this.http.post<void>(`${this.API_BASE_URL}/admin/reset`, body));
+        this.fetchStudents();
+    } catch (e) {
+        console.error('Auto reset failed', e);
+    }
   }
 }
-

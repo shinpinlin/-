@@ -14,10 +14,7 @@
   </header>
 
   <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-    <!-- 修正 1: 統計卡片區。移除多餘的包裝層 div，讓卡片直接成為 Grid 的子項 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch">
-      
-      <!-- 卡片 1: 總學生人數 (直接是 Grid Item) -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 h-full">
         <div class="bg-blue-500 p-3 rounded-full flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -28,7 +25,6 @@
         </div>
       </div>
       
-      <!-- 卡片 2: 出席人數 (直接是 Grid Item) -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 h-full">
         <div class="bg-green-500 p-3 rounded-full flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -39,7 +35,6 @@
         </div>
       </div>
       
-      <!-- 卡片 3: 未出席/請假人數 (可點擊, 直接是 Grid Item) -->
       <div (click)="toggleAbsentFilter()" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 cursor-pointer hover:shadow-xl transition-shadow duration-300 h-full">
         <div class="bg-red-500 p-3 rounded-full flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -51,7 +46,6 @@
       </div>
     </div>
 
-    <!-- 管理操作區塊 (保持不變) -->
     <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-4">
@@ -73,10 +67,8 @@
       </div>
     </div>
     
-    <!-- 修正 2: 搜尋/篩選卡片區域 (已壓縮高度) -->
     <div class="mb-6 p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- 搜尋學生 (在最左邊) -->
         <div class="flex flex-col">
           <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageService.translate('admin.searchStudent') }}</label>
           <input 
@@ -88,7 +80,6 @@
             class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           >
         </div>
-        <!-- 篩選假別 (在右邊) -->
         <div class="flex flex-col">
           <label for="leave-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageService.translate('admin.filterLeaveType') }}</label>
           <select 
@@ -106,7 +97,6 @@
       </div>
     </div>
 
-    <!-- 這裡是第 118 行之後的內容 -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -120,7 +110,6 @@
               <th scope="col" class="px-6 py-3">{{ languageService.translate('admin.lastUpdated') }}</th>
               <th scope="col" class="px-6 py-3 text-center">{{ languageService.translate('admin.actions') }}</th>
             </tr>
-            
           </thead>
           <tbody>
             @for (student of filteredStudents(); track student.id) {
@@ -129,20 +118,18 @@
                 <td class="px-6 py-4">{{ student.name }}</td>
                 <td class="px-6 py-4">
                   <span class="px-2 py-1 font-semibold leading-tight rounded-full text-xs" [class]="getStatusClass(student.status)">
-                    {{ languageService.translate('statuses.' + student.status) }}
+                    @if (student.status === '出席' && studentService.isBedtime()) {
+                        就寢
+                    } @else {
+                        {{ languageService.translate('statuses.' + student.status) }}
+                    }
                   </span>
                 </td>
                 <td class="px-6 py-4">{{ student.leaveType ? languageService.translate('leaveTypes.' + getCleanLeaveType(student.leaveType)) : '無' }}</td>
                 <td class="px-6 py-4">{{ student.leaveRemarks || '無' }}</td>
-                <!-- 
-                  🚨 
-                  最終時區修正：
-                  移除 ': 'Asia/Taipei'' 因為 student.service.ts 已經轉換過了
-                  🚨 
-                -->
-           <td class="px-6 py-4 whitespace-nowrap">
-  {{ getTaipeiTime(student.lastUpdatedAt) }}
-</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  {{ getTaipeiTime(student.lastUpdatedAt) }}
+                </td>
                 <td class="px-6 py-4 text-center">
                   <button (click)="openDeleteConfirm(student)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                     {{ languageService.translate('admin.delete') }}
@@ -162,7 +149,6 @@
     </div>
   </main>
   
-  <!-- 修正 4: 確保所有 @if 區塊都正確關閉 -->
   @if (showResetPasswordModal()) {
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelReset()">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">

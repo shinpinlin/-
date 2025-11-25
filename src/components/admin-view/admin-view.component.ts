@@ -7,12 +7,12 @@ import { LanguageService } from '../../services/language.service';
 
 @Component({
   selector: 'app-admin-view',
-  templateUrl: './admin-view.component.html',
+  templateUrl: './admin-view.component.html', // ✅ 必須指向 admin 的 HTML
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminViewComponent implements OnInit {
+export class AdminViewComponent implements OnInit { // ✅ 類別名稱必須是 AdminViewComponent
   logout = output<void>();
   searchQuery = signal('');
   leaveTypeFilter = signal('all');
@@ -32,30 +32,26 @@ export class AdminViewComponent implements OnInit {
   public studentService = inject(StudentService);
   public languageService = inject(LanguageService);
 
-  readonly leaveTypes: LeaveType[] = ['病假', '事假', '論文假', '其他'];
+  // ✅ 包含所有夜間假別
+  readonly leaveTypes: LeaveType[] = ['病假', '事假', '論文假', 'K書中心', '文康室', '寢室查鋪' as any, '夜間外出' as any, '其他'];
   private readonly ADMIN_DELETE_PASSWORD = '119';
 
   ngOnInit(): void {
     this.studentService.fetchStudents();
   }
 
-  // ✅ 強力修正版：網頁顯示專用 (手動 +8 小時)
+  // ✅ 暴力修正時間 (+8小時)
   getTaipeiTime(utcString: string | undefined | null): string {
     if (!utcString) return '';
     try {
       const date = new Date(utcString);
       const originalTime = date.getTime();
-      // 直接加上 8 小時 (8小時 * 60分 * 60秒 * 1000毫秒)
       const newTime = originalTime + (8 * 60 * 60 * 1000);
       const newDate = new Date(newTime);
 
       return newDate.toLocaleString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
         hour12: false
       });
     } catch (e) {
@@ -98,14 +94,10 @@ export class AdminViewComponent implements OnInit {
   getStatusClass(status: StudentStatus): string {
     const normalizedStatus = status ? status.trim() : '';
     switch (normalizedStatus) {
-      case '出席':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case '缺席':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case '請假':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      case '出席': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case '缺席': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case '請假': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   }
 
@@ -189,76 +181,87 @@ export class AdminViewComponent implements OnInit {
     }
   }
 
-  // ✅ 這是您原本報錯找不到的函式，現在位置正確了
-  exportAbsentList() {
-    console.log("Exporting list...");
-    const studentsToExport = this.studentService.students().filter(
-      s => s.status !== '出席'
-    );
+  // ✅ 功能 1：匯出一般請假
+  exportGeneralLeave() {
+    console.log("Exporting General Leave...");
+    const studentsToExport = this.studentService.students().filter(s => {
+        const type = this.getCleanLeaveType(s.leaveType);
+        return s.status !== '出席' && type !== '寢室查鋪' && type !== '夜間外出';
+    });
+
     if (studentsToExport.length === 0) {
-      console.warn("沒有可匯出的缺席/請假紀錄");
+      alert("目前沒有一般請假紀錄。");
       return;
     }
-    const headers = [
-      "學號",
-      "姓名",
-      "狀態",
-      "假別",
-      "備註",
-      "最後更新時間 (台北時間)"
-    ];
+
+    const headers = ["學號", "姓名", "假別", "備註", "時間 (台北時間)"];
     const csvRows = [headers.join(',')];
 
     for (const student of studentsToExport) {
-      const status = this.languageService.translate(`statuses.${student.status}`);
-      const leaveType = student.leaveType ? this.languageService.translate(`leaveTypes.${this.getCleanLeaveType(student.leaveType)}`) : 'N/A';
-      const remarks = student.leaveRemarks ? `"${student.leaveRemarks.replace(/"/g, '""')}"` : 'N/A';
-      
-      let time = 'N/A';
-      
-      // ✅ 匯出專用的暴力修正 (+8小時)
-      if (student.lastUpdatedAt) {
-        try {
-            const date = new Date(student.lastUpdatedAt);
-            const originalTime = date.getTime();
-            const newTime = originalTime + (8 * 60 * 60 * 1000);
-            const newDate = new Date(newTime);
+      const type = this.getCleanLeaveType(student.leaveType);
+      const remarks = student.leaveRemarks ? `"${student.leaveRemarks.replace(/"/g, '""')}"` : '無';
+      const time = this.getTaipeiTime(student.lastUpdatedAt);
 
-            time = newDate.toLocaleString('zh-TW', {
-                year: 'numeric', 
-                month: '2-digit', 
-                day: '2-digit',
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit',
-                hour12: false
-            });
-        } catch (e) {
-            console.error("時間轉換失敗:", student.lastUpdatedAt, e);
-            time = String(student.lastUpdatedAt);
-        }
-      }
+      csvRows.push([student.id, student.name, type, remarks, time].join(','));
+    }
+    this.downloadCsv(csvRows.join('\n'), "一般請假名單.csv");
+  }
 
-      const row = [
-        student.id,
-        student.name,
-        status,
-        leaveType,
-        remarks,
-        time
-      ].join(',');
-      
-      csvRows.push(row);
+  // ✅ 功能 2：匯出寢室查鋪報表
+  exportDormReport() {
+    console.log("Exporting Dorm Report...");
+    const studentsToExport = this.studentService.students().filter(s => {
+        const type = this.getCleanLeaveType(s.leaveType);
+        return type === '寢室查鋪' || type === '夜間外出';
+    });
+
+    if (studentsToExport.length === 0) {
+      alert("目前沒有寢室查鋪或夜間外出紀錄。");
+      return;
     }
 
-    const csvContent = csvRows.join('\n');
+    const headers = ["學號", "姓名", "查鋪狀態", "寢室號碼", "外出事由", "預計返回", "回報時間"];
+    const csvRows = [headers.join(',')];
+
+    for (const student of studentsToExport) {
+      const type = this.getCleanLeaveType(student.leaveType);
+      const rawRemarks = student.leaveRemarks || '';
+      
+      let status = type === '寢室查鋪' ? '在宿 (查鋪完成)' : '不在宿舍';
+      let room = 'N/A';
+      let reason = 'N/A';
+      let returnTime = 'N/A';
+
+      if (rawRemarks) {
+          const parts = rawRemarks.split(/[,，]+/);
+          parts.forEach(p => {
+              const [key, val] = p.split(/[:：]/);
+              if (key && val) {
+                  if (key.trim() === '寢室') room = val.trim();
+                  if (key.trim() === '事由') reason = val.trim();
+                  if (key.trim() === '預計返回') returnTime = val.trim();
+              }
+          });
+          if (room === 'N/A' && rawRemarks.includes('寢室')) {
+             const match = rawRemarks.match(/寢室[:：]\s*(\w+)/);
+             if (match) room = match[1];
+          }
+      }
+
+      const time = this.getTaipeiTime(student.lastUpdatedAt);
+      csvRows.push([student.id, student.name, status, room, reason, returnTime, time].join(','));
+    }
+    this.downloadCsv(csvRows.join('\n'), "寢室查鋪報表.csv");
+  }
+
+  private downloadCsv(content: string, filename: string) {
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-    const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([bom, content], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", "rollcall_export.csv");
+      link.setAttribute("download", filename);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
