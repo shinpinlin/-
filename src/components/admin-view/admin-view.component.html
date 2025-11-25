@@ -35,7 +35,9 @@
         </div>
       </div>
       
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 h-full">
+      <div (click)="toggleDormCheckFilter()" 
+           [class]="showDormCheckOnly() ? 'ring-4 ring-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'bg-white dark:bg-gray-800'"
+           class="p-6 rounded-xl shadow-lg flex items-center space-x-4 cursor-pointer hover:shadow-xl transition-all duration-200 h-full transform hover:scale-105">
         <div class="bg-indigo-500 p-3 rounded-full flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -47,7 +49,9 @@
         </div>
       </div>
 
-      <div (click)="toggleAbsentFilter()" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 cursor-pointer hover:shadow-xl transition-shadow duration-300 h-full">
+      <div (click)="toggleAbsentFilter()" 
+           [class]="showAbsentOnly() ? 'ring-4 ring-red-400 bg-red-50 dark:bg-red-900/20' : 'bg-white dark:bg-gray-800'"
+           class="p-6 rounded-xl shadow-lg flex items-center space-x-4 cursor-pointer hover:shadow-xl transition-all duration-200 h-full transform hover:scale-105">
         <div class="bg-red-500 p-3 rounded-full flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
@@ -141,148 +145,4 @@
                     } @else if (getCleanLeaveType(student.leaveType) === '夜間外出') {
                         外出
                     } @else {
-                        {{ languageService.translate('statuses.' + student.status) }}
-                    }
-                  </span>
-                </td>
-
-                <td class="px-6 py-4">{{ student.leaveType ? languageService.translate('leaveTypes.' + getCleanLeaveType(student.leaveType)) : '無' }}</td>
-                
-                <td class="px-6 py-4 max-w-xs truncate" [title]="student.leaveRemarks">
-                    {{ student.leaveRemarks || '無' }}
-                </td>
-
-                <td class="px-6 py-4 whitespace-nowrap">
-                  {{ getTaipeiTime(student.lastUpdatedAt) }}
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <button (click)="openDeleteConfirm(student)" class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                    {{ languageService.translate('admin.delete') }}
-                  </button>
-                </td>
-              </tr>
-            } @empty {
-              <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-                <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                  {{ languageService.translate('admin.noMatchingStudents') }}
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-  
-  @if (showResetPasswordModal()) {
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelReset()">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
-        <form (ngSubmit)="confirmReset()">
-          <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.resetModal.title') }}</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ languageService.translate('admin.resetModal.description') }}</p>
-          
-          <div>
-            <label for="resetPassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
-            <input 
-              id="resetPassword"
-              type="password"
-              [ngModel]="resetPasswordInput()"
-              (ngModelChange)="resetPasswordInput.set($event); passwordError.set(null)"
-              name="resetPassword"
-              [placeholder]="languageService.translate('admin.resetModal.passwordPlaceholder')"
-              autocomplete="current-password"
-              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
-            >
-          </div>
-          
-          @if (passwordError()) {
-            <p class="text-red-500 text-sm mt-2">{{ passwordError() }}</p>
-          }
-
-          <div class="mt-6 flex justify-end space-x-3">
-            <button 
-              type="button" 
-              (click)="cancelReset()" 
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition"
-            >
-              {{ languageService.translate('common.cancel') }}
-            </button>
-            <button 
-              type="submit"
-              [disabled]="isResetting()"
-              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
-            >
-              @if(isResetting()) {
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>{{ languageService.translate('common.resetting') }}</span>
-              } @else {
-                <span>{{ languageService.translate('common.confirmReset') }}</span>
-              }
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
-
-  @if (showDeleteConfirmModal() && studentToDelete(); as student) {
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="cancelDelete()">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm" (click)="$event.stopPropagation()">
-        <form (ngSubmit)="confirmDelete()">
-          <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">{{ languageService.translate('admin.deleteModal.title') }}</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {{ languageService.translate('admin.deleteModal.description', { name: student.name, id: student.id }) }}
-            <br>
-            {{ languageService.translate('admin.deleteModal.description2') }}
-          </p>
-          <div>
-            <label for="deletePassword" class="sr-only">{{ languageService.translate('common.password') }}</label>
-            <input
-              id="deletePassword"
-              type="password"
-              [ngModel]="deletePasswordInput()"
-              (ngModelChange)="deletePasswordInput.set($event); deletePasswordError.set(null)"
-              name="deletePassword"
-              [placeholder]="languageService.translate('admin.resetModal.passwordPlaceholder')"
-              autocomplete="current-password"
-              class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
-            >
-          </div>
-          
-          @if (deletePasswordError()) {
-            <p class="text-red-500 text-sm mt-2">{{ deletePasswordError() }}</p>
-          }
-          
-          <div class="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              (click)="cancelDelete()"
-              [disabled]="isDeleting()"
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition disabled:opacity-50"
-            >
-              {{ languageService.translate('common.cancel') }}
-            </button>
-            <button
-              type="submit"
-              [disabled]="isDeleting()"
-              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
-            >
-              @if(isDeleting()) {
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>{{ languageService.translate('common.deleting') }}</span>
-              } @else {
-                <span>{{ languageService.translate('common.confirmDelete') }}</span>
-              }
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
-</div>
+                        {{ languageService.translate('

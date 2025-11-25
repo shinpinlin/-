@@ -16,7 +16,10 @@ export class AdminViewComponent implements OnInit {
   logout = output<void>();
   searchQuery = signal('');
   leaveTypeFilter = signal('all');
-  showAbsentOnly = signal(false);
+  
+  // 篩選開關
+  showAbsentOnly = signal(false);     // 只顯示缺席
+  showDormCheckOnly = signal(false);  // ✅ 新增：只顯示查鋪完成
 
   showResetPasswordModal = signal(false);
   resetPasswordInput = signal('');
@@ -39,7 +42,6 @@ export class AdminViewComponent implements OnInit {
     this.studentService.fetchStudents();
   }
 
-  // 統計查鋪完成人數 (包含已就寢)
   dormCheckedStudents = computed(() => {
       return this.studentService.students().filter(s => {
           const type = this.getCleanLeaveType(s.leaveType);
@@ -65,26 +67,39 @@ export class AdminViewComponent implements OnInit {
     }
   }
 
+  // ✅ 核心篩選邏輯更新
   filteredStudents = computed(() => {
     const students = this.studentService.students();
     const query = this.searchQuery().toLowerCase();
     const leaveType = this.leaveTypeFilter();
     const absentOnly = this.showAbsentOnly();
+    const dormCheckOnly = this.showDormCheckOnly(); // 新增
 
     let filtered = students.filter(student => {
       const normalizedStatus = student.status ? student.status.trim() : '';
-      // 寢室查鋪 & 已就寢 視為 "在場"，不應被「只顯示缺席」過濾掉
       const cleanType = this.getCleanLeaveType(student.leaveType);
       const isPracticallyPresent = normalizedStatus === '出席' || cleanType === '寢室查鋪' || cleanType === '已就寢';
 
+      // 1. 如果開啟「只顯示查鋪完成」
+      if (dormCheckOnly) {
+          if (cleanType !== '寢室查鋪' && cleanType !== '已就寢') {
+              return false;
+          }
+      }
+
+      // 2. 如果開啟「只顯示缺席/請假」
       if (absentOnly && isPracticallyPresent) {
         return false;
       }
+
+      // 3. 下拉選單篩選
       if (leaveType !== 'all') {
         if (normalizedStatus !== '請假' || cleanType !== leaveType) {
           return false;
         }
       }
+
+      // 4. 關鍵字搜尋
       if (query && !(
         student.name.toLowerCase().includes(query) ||
         student.id.includes(query)
@@ -119,8 +134,22 @@ export class AdminViewComponent implements OnInit {
     return leaveType;
   }
 
+  // 切換「只顯示缺席」 (會自動關閉查鋪篩選)
   toggleAbsentFilter() {
-    this.showAbsentOnly.update(current => !current);
+    const newState = !this.showAbsentOnly();
+    this.showAbsentOnly.set(newState);
+    if (newState) {
+        this.showDormCheckOnly.set(false);
+    }
+  }
+
+  // ✅ 新增：切換「只顯示查鋪完成」 (會自動關閉缺席篩選)
+  toggleDormCheckFilter() {
+    const newState = !this.showDormCheckOnly();
+    this.showDormCheckOnly.set(newState);
+    if (newState) {
+        this.showAbsentOnly.set(false);
+    }
   }
 
   openResetModal() {
@@ -195,7 +224,7 @@ export class AdminViewComponent implements OnInit {
     console.log("Exporting General Leave...");
     const studentsToExport = this.studentService.students().filter(s => {
         const type = this.getCleanLeaveType(s.leaveType);
-        return s.status !== '出席' && type !== '寢室查鋪' && type !== '夜間外出' && type !== 'K書中心' && type !== '文康室' && type !== '已就寢';
+        return s.status !== '出席' && type !== '寢室查鋪' && type !== '已就寢' && type !== '夜間外出' && type !== 'K書中心' && type !== '文康室';
     });
 
     if (studentsToExport.length === 0) {
@@ -215,13 +244,11 @@ export class AdminViewComponent implements OnInit {
     this.downloadCsv(csvRows.join('\n'), "一般請假名單.csv");
   }
 
-  // ✅ 匯出夜間報表：解析「請假時間」與「返回時間」
   exportDormReport() {
     console.log("Exporting Dorm Report...");
     const studentsToExport = this.studentService.students().filter(s => {
         const type = this.getCleanLeaveType(s.leaveType);
-        // 包含所有夜間相關 (查鋪、外出、已就寢、K書、文康)
-        return type === '寢室查鋪' || type === '夜間外出' || type === '已就寢' || type === 'K書中心' || type === '文康室';
+        return type === '寢室查鋪' || type === '已就寢' || type === '夜間外出' || type === 'K書中心' || type === '文康室';
     });
 
     if (studentsToExport.length === 0) {
@@ -229,19 +256,19 @@ export class AdminViewComponent implements OnInit {
       return;
     }
 
-    const headers = ["學號", "姓名", "類別", "寢室/地點", "說明/事由", "請假時間", "返回/查鋪時間"];
+    const headers = ["學號", "姓名", "類別", "寢室號碼/地點", "說明/事由", "請假時間", "返回/查鋪時間"];
     const csvRows = [headers.join(',')];
 
     for (const student of studentsToExport) {
       const type = this.getCleanLeaveType(student.leaveType);
       const rawRemarks = student.leaveRemarks || '';
-      const currentTime = this.getTaipeiTime(student.lastUpdatedAt); // 這是最新的一次操作時間
+      const currentTime = this.getTaipeiTime(student.lastUpdatedAt);
 
       let category = type;
       let location = 'N/A';
       let reason = 'N/A';
-      let leaveTime = 'N/A'; // 請假時間
-      let returnTime = currentTime; // 返回或查鋪時間
+      let leaveTime = 'N/A';
+      let returnTime = currentTime;
 
       if (type === '寢室查鋪') {
           if (rawRemarks.includes('寢室')) {
@@ -253,21 +280,20 @@ export class AdminViewComponent implements OnInit {
       } 
       else if (type === '已就寢') {
           category = '已銷假回宿';
-          // 解析: "銷假回宿 | 原假別:K書中心 | 請假時間:23:10"
           const parts = rawRemarks.split('|');
           for (const p of parts) {
               const [key, val] = p.split(/[:：]/);
               if (key && val) {
                   if (key.trim() === '原假別') location = `去過: ${val.trim()}`;
-                  if (key.trim() === '請假時間') leaveTime = val.trim(); // 提取舊的請假時間
+                  if (key.trim() === '請假時間') leaveTime = val.trim();
               }
           }
-          returnTime = currentTime; // 這是按下「我已回宿」的時間
+          returnTime = currentTime;
       }
       else if (type === '夜間外出') {
           category = '不在宿舍';
-          returnTime = '尚未返回'; // 外出中，尚未有返回時間
-          leaveTime = currentTime; // 這是被通報外出的時間
+          returnTime = '尚未返回';
+          leaveTime = currentTime;
 
           const parts = rawRemarks.split(/[,，]+/);
           parts.forEach(p => {
@@ -280,10 +306,9 @@ export class AdminViewComponent implements OnInit {
           });
       } 
       else {
-          // K書中心, 文康室 (尚未銷假)
           location = type;
           reason = rawRemarks;
-          leaveTime = currentTime; // 這是申請時間
+          leaveTime = currentTime;
           returnTime = '尚未返回';
       }
 
