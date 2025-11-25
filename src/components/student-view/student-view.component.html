@@ -28,9 +28,16 @@
       <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
         @if (!showLeaveForm()) {
           <div class="flex flex-col gap-3 items-center">
+            
             <button (click)="showLeaveForm.set(true)" class="w-full sm:w-auto px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 focus:outline-none transition-transform transform hover:scale-105">
               {{ languageService.translate('student.askForLeave') }}
             </button>
+            
+            @if (studentService.isBedtime() && user.status === '請假') {
+               <button (click)="studentReturn()" class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none transition-transform transform hover:scale-105">
+                  🏠 我已回宿 (更改為就寢)
+               </button>
+            }
 
             <button (click)="openDormModal()" class="w-full sm:w-auto px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none transition-transform transform hover:scale-105">
               🛏️ 寢室長查鋪回報

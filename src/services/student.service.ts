@@ -44,7 +44,7 @@ const MASTER_ROSTER: { id: string, name: string }[] = [
   { id: '1133033', name: '葉冠愷' },
   { id: '1133035', name: '李柏諠' },
   { id: '1133036', name: '翁達翰' },
-  { id: '1133037', name: '9高爾義' },
+  { id: '1133037', name: '高爾義' },
   { id: '1133038', name: '高睿宏' },
   { id: '1133044', name: '吳育鑫' },
   { id: '1133048', name: '鄭偉民' },
@@ -136,7 +136,22 @@ export class StudentService {
 
   public totalStudents = computed(() => this._students().length);
   public presentStudents = computed(() => this._students().filter(s => s.status === '出席').length);
-  public absentStudents = computed(() => this._students().filter(s => s.status !== '出席').length);
+  
+  // ✅ 修改：缺席人數 = 不是出席 且 假別不是 '寢室查鋪' 的人
+  public absentStudents = computed(() => this._students().filter(s => {
+      const isPresent = s.status === '出席';
+      const isDormChecked = s.leaveType === '寢室查鋪'; // 假設後端存的是原始字串
+      // 如果是 '請假-寢室查鋪' 格式，這裡要做字串處理，但通常我們用 filter 比較簡單
+      const rawType = s.leaveType ? (s.leaveType.startsWith('請假-') ? s.leaveType.substring(3) : s.leaveType) : '';
+      
+      return !isPresent && rawType !== '寢室查鋪';
+  }).length);
+
+  // ✅ 新增：查鋪完成人數
+  public dormCheckedStudents = computed(() => this._students().filter(s => {
+      const rawType = s.leaveType ? (s.leaveType.startsWith('請假-') ? s.leaveType.substring(3) : s.leaveType) : '';
+      return rawType === '寢室查鋪';
+  }).length);
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
@@ -223,66 +238,50 @@ export class StudentService {
     this._students.set(initialStudents);
   }
 
-  // ✅ 暴力修正版的時間更新邏輯
+  // ✅ 暴力修正時間邏輯 (確保 +8)
   private updateCountdown(): void {
-    // 1. 取得目前系統的 UTC 時間
     const now = new Date();
-    
-    // 2. 暴力加 8 小時，模擬成「台灣時間的 Date 物件」
-    // 注意：這樣做之後，此物件的 getUTCHours() 就會變成「台灣時間的小時」
     const taiwanTimeMs = now.getTime() + (8 * 60 * 60 * 1000);
     const taiwanDate = new Date(taiwanTimeMs);
 
-    // 3. 讀取時間 (使用 UTC 方法讀取，因為我們已經把時間偏移過了)
-    // 這裡的 currentHour 就是台灣時間的小時 (0-23)
     const currentHour = taiwanDate.getUTCHours();
     const currentMinute = taiwanDate.getUTCMinutes();
     const currentSecond = taiwanDate.getUTCSeconds();
-    const todayStr = taiwanDate.toISOString().split('T')[0]; // 取得 YYYY-MM-DD
+    const todayStr = taiwanDate.toISOString().split('T')[0]; 
 
-    // ✅ 自動重置邏輯 (07:00)
+    // 自動重置
     if (currentHour === 7 && this.lastResetDate !== todayStr) {
         console.log('Triggering 07:00 Auto Reset...');
         this.resetToInitialList(); 
         this.lastResetDate = todayStr;
     }
 
-    // ✅ 就寢時間判斷 (23:00 - 06:00)
+    // 就寢時間
     const isBedtimeNow = currentHour >= 23 || currentHour < 6;
     this._isBedtime.set(isBedtimeNow);
 
-    // --- 早晚點名倒數邏輯 ---
-    // 因為我們現在用的是 "偽造的台灣時間"，所以邏輯稍微不同
-    // 我們直接比較 "當前的總秒數" 和 "目標的總秒數"
-    
+    // 倒數計時
     const currentTotalSeconds = (currentHour * 3600) + (currentMinute * 60) + currentSecond;
-    const morningCutoffSeconds = (9 * 3600) + (30 * 60); // 09:30
-    const eveningCutoffSeconds = (21 * 3600) + (30 * 60); // 21:30
+    const morningCutoffSeconds = (9 * 3600) + (30 * 60); 
+    const eveningCutoffSeconds = (21 * 3600) + (30 * 60); 
 
     let isCurrentlyEvening = false;
     let secondsUntilNext = 0;
 
-    // 09:30 ~ 21:30 (晚點名倒數時段)
     if (currentTotalSeconds >= morningCutoffSeconds && currentTotalSeconds < eveningCutoffSeconds) {
         isCurrentlyEvening = true;
         secondsUntilNext = eveningCutoffSeconds - currentTotalSeconds;
-    } 
-    // 其他時間 (早點名倒數時段)
-    else {
+    } else {
         isCurrentlyEvening = false;
         if (currentTotalSeconds < morningCutoffSeconds) {
-            // 還沒到早上 09:30
             secondsUntilNext = morningCutoffSeconds - currentTotalSeconds;
         } else {
-            // 已經過了晚上 21:30，要算到明天早上 09:30
-            // 剩餘秒數 = (今天剩下的秒數) + (明天早上的秒數)
             secondsUntilNext = (24 * 3600 - currentTotalSeconds) + morningCutoffSeconds;
         }
     }
 
     this._isEvening.set(isCurrentlyEvening);
 
-    // 格式化倒數時間
     const h = Math.floor(secondsUntilNext / 3600);
     const m = Math.floor((secondsUntilNext % 3600) / 60);
     const s = secondsUntilNext % 60;
