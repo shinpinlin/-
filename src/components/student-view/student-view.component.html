@@ -133,8 +133,8 @@
               <h4 class="text-sm font-bold text-red-800 dark:text-red-300">填寫缺席者資料</h4>
               
               <div>
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">缺席學號</label>
-                <input type="text" [ngModel]="missingStudentId()" (ngModelChange)="missingStudentId.set($event)" class="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">缺席學號 (可輸入多個，用空格或逗號隔開)</label>
+                <textarea rows="2" [ngModel]="missingStudentIds()" (ngModelChange)="missingStudentIds.set($event)" placeholder="例如: 1123001, 1123002" class="w-full px-2 py-1 text-sm rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
               </div>
               
               <div>

@@ -32,7 +32,8 @@ export class StudentViewComponent {
   dormMessage = signal('');
   dormCheckOption = signal<'checked' | 'missing'>('checked');
   
-  missingStudentId = signal('');
+  // ✅ 修改：支援多個學號輸入
+  missingStudentIds = signal(''); 
   missingReason = signal('');
   missingReturnTime = signal('');
   
@@ -65,9 +66,8 @@ export class StudentViewComponent {
     if (normalizedStatus === '請假' && user.leaveType) {
         let actualLeaveType = this.getCleanLeaveType(user.leaveType);
         
-        // 特殊狀態顯示文字
-        if (actualLeaveType === '寢室查鋪' as any) return `寢室查鋪完成 (${user.leaveRemarks})`;
-        if (actualLeaveType === '已就寢' as any) return `已回宿就寢`;
+        if (actualLeaveType === '寢室查鋪' as any) return `就寢 (查鋪確認)`;
+        if (actualLeaveType === '已就寢' as any) return `就寢 (已銷假)`;
         if (actualLeaveType === '夜間外出' as any) return `夜間外出中`;
 
         const leaveTypeKey = `leaveTypes.${actualLeaveType}`;
@@ -119,13 +119,11 @@ export class StudentViewComponent {
       return t;
   }
 
-  // 提交請假
   async submitLeave() {
     const user = this.currentUser();
     if (!user) return;
     
     const type = this.leaveType();
-    // 只有 '其他' 必須填寫備註
     if (type === '其他' && !this.remarks().trim()) {
       alert(`申請「${type}」必須填寫備註欄位！`);
       return;
@@ -145,7 +143,6 @@ export class StudentViewComponent {
     }
   }
 
-  // ✅ 學生銷假/回宿功能 (資料保存邏輯)
   async studentReturn() {
       const user = this.currentUser();
       if (!user) return;
@@ -154,18 +151,13 @@ export class StudentViewComponent {
 
       this.isSubmitting.set(true);
       try {
-          // 1. 抓取舊的請假資料
           let historyNote = '學生自行回報';
-          
           if (user.status === '請假') {
               const oldType = this.getCleanLeaveType(user.leaveType);
-              // 取得上次更新時間作為「請假時間」
               const leaveTime = this.getTaipeiTime(user.lastUpdatedAt); 
-              // 格式化存入備註: "銷假回宿 | 原假別:K書中心 | 請假時間:23:10"
               historyNote = `銷假回宿 | 原假別:${oldType} | 請假時間:${leaveTime}`;
           }
 
-          // 2. 發送新狀態 '已就寢'，並附帶歷史備註
           await this.studentService.applyForLeave(user.id, '已就寢' as any, historyNote);
           alert('歡迎回來！狀態已更新為「就寢」。');
       } catch (e) {
@@ -175,17 +167,17 @@ export class StudentViewComponent {
       }
   }
 
-  // 寢室長功能
   openDormModal() {
     this.dormRoomNumber.set('');
     this.dormCheckOption.set('checked');
-    this.missingStudentId.set('');
+    this.missingStudentIds.set('');
     this.missingReason.set('');
     this.missingReturnTime.set('');
     this.dormMessage.set('');
     this.showDormCheckModal.set(true);
   }
 
+  // ✅ 邏輯升級：批次處理缺席者，並自動標記寢室長為「查鋪」
   async submitDormCheck() {
     const room = this.dormRoomNumber().trim();
     if (!room) {
@@ -195,50 +187,50 @@ export class StudentViewComponent {
 
     this.isDormSubmitting.set(true);
     this.dormMessage.set('處理中...');
-    
-    const allStudents = this.studentService.students();
 
     try {
-        if (this.dormCheckOption() === 'checked') {
-            // 情境A: 宿舍區查鋪完成
-            const leader = this.currentUser();
-            if (leader) {
-                // 防呆：如果寢室長正在請假(K書中心等)，提示且不覆蓋
-                const currentType = this.getCleanLeaveType(leader.leaveType);
-                const isAlreadyOnLeave = leader.status === '請假' && currentType !== '寢室查鋪' && currentType !== '已就寢';
-                
-                if (isAlreadyOnLeave) {
-                    alert(`您目前狀態為「${currentType}」，系統將保留您的請假紀錄，不會變更為查鋪完成。`);
-                    this.isDormSubmitting.set(false);
-                    return;
-                }
-
-                const remarks = `寢室:${room}`;
-                await this.studentService.applyForLeave(leader.id, '寢室查鋪' as any, remarks);
-                this.dormMessage.set('回報成功');
+        // 1. 無論如何，先嘗試標記寢室長為「查鋪完成」
+        // 除非寢室長自己已經請假 (K書中心等)
+        const leader = this.currentUser();
+        if (leader) {
+            const currentType = this.getCleanLeaveType(leader.leaveType);
+            // 如果寢室長狀態正常，或已經是查鋪/就寢狀態 -> 更新為查鋪
+            const canUpdateLeader = leader.status === '出席' || currentType === '寢室查鋪' || currentType === '已就寢';
+            
+            if (canUpdateLeader) {
+                const leaderRemarks = `寢室:${room} - 查鋪完成`;
+                await this.studentService.applyForLeave(leader.id, '寢室查鋪' as any, leaderRemarks);
             }
+            // 如果寢室長本人在 K書中心，系統不更新他的狀態，但允許他回報室友
+        }
+
+        // 2. 根據選項處理
+        if (this.dormCheckOption() === 'checked') {
+            // 全寢到位：只更新寢室長狀態 (已在上方執行)
+            this.dormMessage.set('回報成功：全寢到位');
         } else {
-            // 情境B: 不在宿舍區
-            const studentId = this.missingStudentId().trim();
+            // 不在宿舍區：批次處理缺席名單
+            const idsInput = this.missingStudentIds().trim();
             const reason = this.missingReason().trim();
             const returnTime = this.missingReturnTime().trim();
 
-            if (!studentId || !reason || !returnTime) {
-                this.dormMessage.set('請填寫完整資訊');
+            if (!idsInput || !reason || !returnTime) {
+                this.dormMessage.set('請填寫缺席學號及原因');
                 this.isDormSubmitting.set(false);
                 return;
             }
 
-            const targetStudent = allStudents.find(s => s.id === studentId);
-            if (!targetStudent) {
-                 this.dormMessage.set('找不到該學號');
-                 this.isDormSubmitting.set(false);
-                 return;
+            // ✅ 支援多個學號：用空格、逗號分隔
+            const studentIds = idsInput.split(/[,，\s]+/).filter(id => id.trim() !== '');
+            let successCount = 0;
+
+            for (const sid of studentIds) {
+                const remarks = `寢室:${room}, 事由:${reason}, 預計返回:${returnTime}`;
+                await this.studentService.applyForLeave(sid, '夜間外出' as any, remarks);
+                successCount++;
             }
-            
-            const remarks = `寢室:${room}, 事由:${reason}, 預計返回:${returnTime}`;
-            await this.studentService.applyForLeave(studentId, '夜間外出' as any, remarks);
-            this.dormMessage.set(`回報成功：學生 ${studentId} 不在宿舍`);
+
+            this.dormMessage.set(`回報成功：已標記 ${successCount} 位學生外出`);
         }
 
         this.studentService.fetchStudents();
@@ -246,7 +238,7 @@ export class StudentViewComponent {
             if (this.showDormCheckModal()) {
                 this.showDormCheckModal.set(false);
             }
-        }, 1500);
+        }, 2000);
     } catch (error) {
         this.dormMessage.set('系統錯誤');
     } finally {
